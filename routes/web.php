@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShipController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -55,6 +56,12 @@ Route::middleware(['auth', WarehouseMiddleware::class])->name('warehouse.')->gro
 
 // Admin routes
 Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
+    // Export / File Upload
+    Route::get('export', [ExportController::class, 'index'])->name('export.index');
+    Route::post('export/upload', [ExportController::class, 'upload'])->name('export.upload');
+    Route::get('export/download/{filename}', [ExportController::class, 'download'])->name('export.download');
+    Route::delete('export/{filename}', [ExportController::class, 'destroy'])->name('export.destroy');
+
     Route::resource('vendors', VendorController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
