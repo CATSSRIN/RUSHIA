@@ -58,20 +58,45 @@
                     </div>
                 @endif
             @else
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                    <svg class="mx-auto w-14 h-14 text-green-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <p class="text-gray-600 font-medium mb-1">{{ strtoupper($extension) }} {{ __('files cannot be previewed in the browser.') }}</p>
-                    <p class="text-gray-400 text-sm mb-6">{{ __('Please download the file to view its contents.') }}</p>
-                    <a href="{{ route('admin.export.download', $safeName) }}"
-                       class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                @if(in_array($extension, ['xls', 'xlsx']))
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-800">{{ strtoupper($extension) }} {{ __('Contents') }}</h3>
+                            <a href="{{ route('admin.export.download', $safeName) }}"
+                               class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                {{ __('Download') }}
+                            </a>
+                        </div>
+                        <div class="p-4">
+                            <iframe
+                                src="{{ route('admin.export.render', $safeName) }}"
+                                class="w-full border-0 rounded"
+                                style="min-height: 600px;"
+                                onload="this.style.height = (this.contentWindow.document.body.scrollHeight + 32) + 'px';"
+                                sandbox="allow-same-origin"
+                                title="{{ __('Excel Preview') }}: {{ $safeName }}"
+                            ></iframe>
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                        <svg class="mx-auto w-14 h-14 text-green-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        {{ __('Download') }} {{ $safeName }}
-                    </a>
-                </div>
+                        <p class="text-gray-600 font-medium mb-1">{{ strtoupper($extension) }} {{ __('files cannot be previewed in the browser.') }}</p>
+                        <p class="text-gray-400 text-sm mb-6">{{ __('Please download the file to view its contents.') }}</p>
+                        <a href="{{ route('admin.export.download', $safeName) }}"
+                           class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            {{ __('Download') }} {{ $safeName }}
+                        </a>
+                    </div>
+                @endif
             @endif
 
         </div>

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Html as HtmlWriter;
 
 class ExportController extends Controller
 {
@@ -85,10 +87,39 @@ class ExportController extends Controller
             return view('admin.export.preview', compact('safeName', 'rows', 'extension', 'truncated'));
         }
 
-        // XLS / XLSX — no server-side renderer available; show download prompt
+        // XLS / XLSX — rendered via a separate iframe route that preserves Excel formatting.
         $rows = [];
         $truncated = false;
         return view('admin.export.preview', compact('safeName', 'rows', 'extension', 'truncated'));
+    }
+
+    public function renderHtml(string $filename): \Illuminate\Http\Response
+    {
+        $safeName = basename($filename);
+        $filePath = $this->uploadDir . '/' . $safeName;
+
+        $realPath = realpath($filePath);
+        $realUploadDir = realpath($this->uploadDir);
+
+        if ($realPath === false || $realUploadDir === false || !str_starts_with($realPath, $realUploadDir . DIRECTORY_SEPARATOR)) {
+            abort(404);
+        }
+
+        if (!preg_match('/\.(xls|xlsx)$/i', $safeName)) {
+            abort(404);
+        }
+
+        try {
+            $spreadsheet = IOFactory::load($realPath);
+            $writer = new HtmlWriter($spreadsheet);
+            $writer->setSheetIndex(0);
+            $writer->setEmbedImages(false);
+            $html = $writer->generateHtmlAll();
+        } catch (\Throwable $e) {
+            $html = '<html><body><p>Could not render file.</p></body></html>';
+        }
+
+        return response($html, 200)->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     public function download(string $filename)
