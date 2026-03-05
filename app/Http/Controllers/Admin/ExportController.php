@@ -49,6 +49,48 @@ class ExportController extends Controller
         return redirect()->route('admin.export.index')->with('success', 'File "' . basename($file->getClientOriginalName()) . '" uploaded successfully.');
     }
 
+    public function preview(string $filename)
+    {
+        $safeName = basename($filename);
+        $filePath = $this->uploadDir . '/' . $safeName;
+
+        // Resolve the real path and confirm it stays inside the upload directory
+        $realPath = realpath($filePath);
+        $realUploadDir = realpath($this->uploadDir);
+
+        if ($realPath === false || $realUploadDir === false || !str_starts_with($realPath, $realUploadDir . DIRECTORY_SEPARATOR)) {
+            abort(404);
+        }
+
+        if (!preg_match('/\.(xls|xlsx|csv)$/i', $safeName)) {
+            abort(404);
+        }
+
+        $extension = strtolower(pathinfo($safeName, PATHINFO_EXTENSION));
+
+        if ($extension === 'csv') {
+            $rows = [];
+            $truncated = false;
+            if (($handle = fopen($realPath, 'r')) !== false) {
+                while (($row = fgetcsv($handle)) !== false) {
+                    $rows[] = $row;
+                    // Limit to 1 header + 1 000 data rows to prevent memory exhaustion
+                    if (count($rows) >= 1001) {
+                        $truncated = true;
+                        break;
+                    }
+                }
+                fclose($handle);
+            }
+            return view('admin.export.preview', compact('safeName', 'rows', 'extension', 'truncated'));
+        }
+
+        // XLS / XLSX — no server-side renderer available; show download prompt
+        $rows = [];
+        $truncated = false;
+        return view('admin.export.preview', compact('safeName', 'rows', 'extension', 'truncated'));
+    }
+
     public function download(string $filename)
     {
         $safeName = basename($filename);

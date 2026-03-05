@@ -59,6 +59,7 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     // Export / File Upload
     Route::get('export', [ExportController::class, 'index'])->name('export.index');
     Route::post('export/upload', [ExportController::class, 'upload'])->name('export.upload');
+    Route::get('export/preview/{filename}', [ExportController::class, 'preview'])->name('export.preview');
     Route::get('export/download/{filename}', [ExportController::class, 'download'])->name('export.download');
     Route::delete('export/{filename}', [ExportController::class, 'destroy'])->name('export.destroy');
 
