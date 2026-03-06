@@ -71,14 +71,25 @@
                             </a>
                         </div>
                         <div class="p-4">
-                            <iframe
-                                src="{{ route('admin.export.render', $safeName) }}"
-                                class="w-full border-0 rounded"
-                                style="min-height: 600px;"
-                                onload="this.style.height = (this.contentWindow.document.body.scrollHeight + 32) + 'px';"
-                                sandbox="allow-same-origin"
-                                title="{{ __('Excel Preview') }}: {{ $safeName }}"
-                            ></iframe>
+                            @if($pdfUrl)
+                                <iframe
+                                    src="{{ $pdfUrl }}"
+                                    class="w-full border-0 rounded"
+                                    style="min-height: 600px;"
+                                    title="{{ __('Excel Preview') }}: {{ $safeName }}"
+                                ></iframe>
+                            @else
+                                <div class="p-8 text-center">
+                                    <p class="text-gray-500 mb-4">{{ __('Could not generate PDF preview.') }}</p>
+                                    <a href="{{ route('admin.export.download', $safeName) }}"
+                                       class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                        </svg>
+                                        {{ __('Download') }} {{ $safeName }}
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @else
