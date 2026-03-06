@@ -6,14 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Html as HtmlWriter;
+use PhpOffice\PhpSpreadsheet\Writer\Pdf\Dompdf as DompdfWriter;
 
 class ExportController extends Controller
 {
     protected string $uploadDir;
+    protected string $pdfDir;
 
     public function __construct()
     {
         $this->uploadDir = public_path('uploaded_file');
+        $this->pdfDir = public_path('uploaded_file/pdf');
     }
 
     public function index()
@@ -87,10 +90,34 @@ class ExportController extends Controller
             return view('admin.export.preview', compact('safeName', 'rows', 'extension', 'truncated'));
         }
 
-        // XLS / XLSX — rendered via a separate iframe route that preserves Excel formatting.
+        // XLS / XLSX — convert to PDF on-demand and show via an iframe.
         $rows = [];
         $truncated = false;
-        return view('admin.export.preview', compact('safeName', 'rows', 'extension', 'truncated'));
+        $pdfUrl = null;
+
+        $pdfName = $safeName . '.pdf';
+        $pdfPath = $this->pdfDir . '/' . $pdfName;
+
+        if (!file_exists($pdfPath)) {
+            if (!is_dir($this->pdfDir)) {
+                mkdir($this->pdfDir, 0755, true);
+            }
+            try {
+                $spreadsheet = IOFactory::load($realPath);
+                IOFactory::registerWriter('Pdf', DompdfWriter::class);
+                $writer = IOFactory::createWriter($spreadsheet, 'Pdf');
+                $writer->setSheetIndex(0);
+                $writer->save($pdfPath);
+            } catch (\Throwable $e) {
+                // PDF generation failed; $pdfUrl remains null
+            }
+        }
+
+        if (file_exists($pdfPath)) {
+            $pdfUrl = asset('uploaded_file/pdf/' . $pdfName);
+        }
+
+        return view('admin.export.preview', compact('safeName', 'rows', 'extension', 'truncated', 'pdfUrl'));
     }
 
     public function renderHtml(string $filename): \Illuminate\Http\Response
