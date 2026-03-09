@@ -35,7 +35,7 @@ return new class extends Migration
             $table->decimal('budget', 20, 2)->nullable();
             $table->decimal('total_belanja_ransum', 20, 2)->nullable();
             $table->decimal('selisih_anggaran', 20, 2)->nullable();
-            $table->enum('status', ['pending', 'imported'])->default('pending');
+            $table->string('status')->default('pending'); // pending | imported
             $table->foreignId('uploaded_by')->constrained('users')->cascadeOnDelete();
             $table->timestamp('imported_at')->nullable();
             $table->timestamps();

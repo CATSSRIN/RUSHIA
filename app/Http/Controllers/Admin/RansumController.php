@@ -9,6 +9,7 @@ use App\Models\RansumItem;
 use App\Models\RansumUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RansumController extends Controller
@@ -18,10 +19,7 @@ class RansumController extends Controller
     public function __construct()
     {
         $this->uploadDir = storage_path('app/private/ransum_uploads');
-
-        if (! is_dir($this->uploadDir)) {
-            mkdir($this->uploadDir, 0755, true);
-        }
+        File::ensureDirectoryExists($this->uploadDir, 0755);
     }
 
     // ------------------------------------------------------------------
