@@ -5,6 +5,7 @@ use App\Http\Controllers\ShipController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\Admin\ExportController;
+use App\Http\Controllers\Admin\RansumController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -56,13 +57,20 @@ Route::middleware(['auth', WarehouseMiddleware::class])->name('warehouse.')->gro
 
 // Admin routes
 Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
-    // Export / File Upload
+    // Export / File Upload (general)
     Route::get('export', [ExportController::class, 'index'])->name('export.index');
     Route::post('export/upload', [ExportController::class, 'upload'])->name('export.upload');
     Route::get('export/preview/{filename}', [ExportController::class, 'preview'])->name('export.preview');
     Route::get('export/render/{filename}', [ExportController::class, 'renderHtml'])->name('export.render');
     Route::get('export/download/{filename}', [ExportController::class, 'download'])->name('export.download');
     Route::delete('export/{filename}', [ExportController::class, 'destroy'])->name('export.destroy');
+
+    // Ransum BPB Import
+    Route::get('ransum', [RansumController::class, 'index'])->name('ransum.index');
+    Route::post('ransum/upload', [RansumController::class, 'upload'])->name('ransum.upload');
+    Route::get('ransum/{id}/preview', [RansumController::class, 'preview'])->name('ransum.preview');
+    Route::post('ransum/{id}/import', [RansumController::class, 'import'])->name('ransum.import');
+    Route::delete('ransum/{id}', [RansumController::class, 'destroy'])->name('ransum.destroy');
 
     Route::resource('vendors', VendorController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);
