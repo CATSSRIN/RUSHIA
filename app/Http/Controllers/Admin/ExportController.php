@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Imports\GenericImport;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Writer\Html as HtmlWriter;
-use PhpOffice\PhpSpreadsheet\Writer\Pdf\Dompdf as DompdfWriter;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
 {
@@ -103,11 +103,9 @@ class ExportController extends Controller
                 mkdir($this->pdfDir, 0755, true);
             }
             try {
-                $spreadsheet = IOFactory::load($realPath);
-                IOFactory::registerWriter('Pdf', DompdfWriter::class);
-                $writer = IOFactory::createWriter($spreadsheet, 'Pdf');
-                $writer->setSheetIndex(0);
-                $writer->save($pdfPath);
+                $sheets = Excel::toArray(new GenericImport(), $realPath);
+                $html = $this->buildHtmlTable($sheets[0] ?? []);
+                Pdf::loadHTML($html)->save($pdfPath);
             } catch (\Throwable $e) {
                 // PDF generation failed; $pdfUrl remains null
             }
@@ -137,11 +135,8 @@ class ExportController extends Controller
         }
 
         try {
-            $spreadsheet = IOFactory::load($realPath);
-            $writer = new HtmlWriter($spreadsheet);
-            $writer->setSheetIndex(0);
-            $writer->setEmbedImages(false);
-            $html = $writer->generateHtmlAll();
+            $sheets = Excel::toArray(new GenericImport(), $realPath);
+            $html = $this->buildHtmlTable($sheets[0] ?? []);
         } catch (\Throwable $e) {
             $html = '<html><body><p>Could not render file.</p></body></html>';
         }
@@ -173,5 +168,31 @@ class ExportController extends Controller
         }
 
         return redirect()->route('admin.export.index')->with('success', 'File deleted.');
+    }
+
+    /**
+     * Build a simple HTML page containing a table from a 2-D array of rows.
+     *
+     * The first row is treated as column headers (rendered as <th> elements).
+     * All subsequent rows are rendered as data rows (<td> elements).
+     *
+     * @param  array  $rows  A 2-D array where the first element is the header row.
+     * @return string        A full HTML document string.
+     */
+    private function buildHtmlTable(array $rows): string
+    {
+        if (empty($rows)) {
+            return '<html><body><p>The file is empty.</p></body></html>';
+        }
+
+        $style = '<style>body{font-family:sans-serif;font-size:12px;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ccc;padding:4px 8px;text-align:left;}th{background:#f0f0f0;}</style>';
+        $thead = '<thead><tr>' . implode('', array_map(fn ($h) => '<th>' . htmlspecialchars((string) $h) . '</th>', $rows[0])) . '</tr></thead>';
+        $tbody = '<tbody>';
+        foreach (array_slice($rows, 1) as $row) {
+            $tbody .= '<tr>' . implode('', array_map(fn ($c) => '<td>' . htmlspecialchars((string) $c) . '</td>', $row)) . '</tr>';
+        }
+        $tbody .= '</tbody>';
+
+        return '<html><head>' . $style . '</head><body><table>' . $thead . $tbody . '</table></body></html>';
     }
 }
