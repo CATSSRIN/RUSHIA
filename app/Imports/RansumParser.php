@@ -7,12 +7,12 @@ namespace App\Imports;
  *
  * Spreadsheet layout (1-based row numbers):
  *   Rows 1-3  : Logo / empty
- *   Row  4    : E="Vessel Code"  F=value  G="Vessel Name"      H=value  I="Voyage"   J=value  K="Contact Person"           L=value
- *   Row  5    : E="Year"         F=value  G="Date Start"        H=value  I="Date End" J=value  K="Jumlah Hari Pensupplaian"  L=value
- *   Row  6    : E="ETA"          F=value  G="Vessel Route"      H=value  I="Rute Sekarang" J=value K="Port Tujuan"           L=value
- *   Row  7    : E="Currency"     F=value  G="Conversi Rupiah"   H=value               K="Jumlah Crew"                       L=value
- *   Row  8    : E="Vendor Name"  F=value  G="Barang Non BKP"    H=value  I="Barang BKP"  J=value  K="Pajak 11%"             L=value
- *   Row  9    : E="Budget"       F=value  G="Total Belanja Ransum" H=value I="Selisih Anggaran & Pembelanjaan Ransum" J=value
+ *   Row  4    : E="Vessel Code"  F=value  G="Vessel Name"         H=value  I="Voyage"   J=value  K="Contact Person"           L=value
+ *   Row  5    : E="Year"         F=value  G="Date Start"          H=value  I="Date End" J=value  K="Jumlah Hari Pensupplaian"  L=value
+ *   Row  6    : E="ETA"          F=value  G="Vessel Route"         H=value  I="Rute Sekarang" J=value K="Port Tujuan"          L=value
+ *   Row  7    : E="Currency"     F=value  G="Conversi Rupiah"      H=value               K="Jumlah Crew"                      L=value
+ *   Row  8    : E="Vendor Name"  F=value  G="Barang Non BKP"       H=value  I="Barang BKP"  J=value  K="Pajak 11%"            L=value
+ *   Row  9    : E="Budget"       F=value  G="Total Belanja Ransum" H=value  I="Selisih Anggaran & Pembelanjaan Ransum" J=value
  *   Row 10    : empty
  *   Row 11    : Main column headers (NAMA RANSUM …)
  *   Row 12+   : Section header rows and item data rows (alternating)
@@ -56,28 +56,28 @@ class RansumParser
         $r = fn (int $row, int $col) => $this->cell($row, $col);
 
         return [
-            'vessel_code'               => $r(4, 5),   // F4
-            'vessel_name'               => $r(4, 7),   // H4
-            'voyage'                    => $r(4, 9),   // J4
-            'contact_person'            => $r(4, 11),  // L4
-            'year'                      => $r(5, 5),   // F5
-            'date_start'                => $r(5, 7),   // H5
-            'date_end'                  => $r(5, 9),   // J5
-            'jumlah_hari_pensupplaian'  => $r(5, 11),  // L5
-            'eta'                       => $r(6, 5),   // F6
-            'vessel_route'              => $r(6, 7),   // H6
-            'rute_sekarang'             => $r(6, 9),   // J6
-            'port_tujuan'              => $r(6, 11),  // L6
-            'currency'                  => $r(7, 5),   // F7
-            'conversi_rupiah'           => $r(7, 7),   // H7
-            'jumlah_crew'               => $r(7, 11),  // L7
-            'vendor_name'               => $r(8, 5),   // F8
-            'barang_non_bkp'            => $this->numeric($r(8, 7)),   // H8
-            'barang_bkp'                => $this->numeric($r(8, 9)),   // J8
-            'pajak_11'                  => $this->numeric($r(8, 11)),  // L8
-            'budget'                    => $this->numeric($r(9, 5)),   // F9
-            'total_belanja_ransum'      => $this->numeric($r(9, 7)),   // H9
-            'selisih_anggaran'          => $this->numeric($r(9, 9)),   // J9
+            'vessel_code'               => $r(4, 6),   // F4
+            'vessel_name'               => $r(4, 8),   // H4
+            'voyage'                    => $r(4, 10),  // J4
+            'contact_person'            => $r(4, 12),  // L4
+            'year'                      => $r(5, 6),   // F5
+            'date_start'                => $r(5, 8),   // H5
+            'date_end'                  => $r(5, 10),  // J5
+            'jumlah_hari_pensupplaian'  => $r(5, 12),  // L5
+            'eta'                       => $r(6, 6),   // F6
+            'vessel_route'              => $r(6, 8),   // H6
+            'rute_sekarang'             => $r(6, 10),  // J6
+            'port_tujuan'               => $r(6, 12),  // L6
+            'currency'                  => $r(7, 6),   // F7
+            'conversi_rupiah'           => $r(7, 8),   // H7
+            'jumlah_crew'               => $r(7, 12),  // L7
+            'vendor_name'               => $r(8, 6),   // F8
+            'barang_non_bkp'            => $this->numeric($r(8, 8)),   // H8
+            'barang_bkp'                => $this->numeric($r(8, 10)),  // J8
+            'pajak_11'                  => $this->numeric($r(8, 12)),  // L8
+            'budget'                    => $this->numeric($r(9, 6)),   // F9
+            'total_belanja_ransum'      => $this->numeric($r(9, 8)),   // H9
+            'selisih_anggaran'          => $this->numeric($r(9, 10)),  // J9
         ];
     }
 
