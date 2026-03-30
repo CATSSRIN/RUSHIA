@@ -120,6 +120,8 @@
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('BKP') }}</th>
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('PPN 11%') }}</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Ket. Remarks') }}</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Status Received') }}</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Good Received') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
@@ -139,6 +141,8 @@
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['bkp'] !== null ? number_format($item['bkp'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['ppn_11'] !== null ? number_format($item['ppn_11'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-gray-500 max-w-xs truncate">{{ $item['ket_remarks'] ?? '-' }}</td>
+                                        <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['status_received'] ?? '-' }}</td>
+                                        <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['good_received'] ?? '-' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
