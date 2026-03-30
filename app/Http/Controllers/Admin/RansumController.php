@@ -99,7 +99,7 @@ class RansumController extends Controller
             'stored_filename'   => $storedName,
             'status'            => 'pending',
             'uploaded_by'       => auth()->id(),
-        ]));
+        ] + $parser->parseSignatures()));
 
         return redirect()->route('admin.ransum.preview', $upload->id)
             ->with('success', __('File berhasil diupload. Silakan periksa preview sebelum import.'));
@@ -179,6 +179,81 @@ class RansumController extends Controller
     }
 
     // ------------------------------------------------------------------
+    // Serve Signature Photo (private storage)
+    // ------------------------------------------------------------------
+
+    public function servePhoto(int $id, string $type)
+    {
+        if (!in_array($type, ['pemohon', 'menyetujui'])) {
+            abort(404);
+        }
+
+        $upload = RansumUpload::findOrFail($id);
+        $photoPath = $upload->{$type . '_photo'};
+
+        if (!$photoPath) {
+            abort(404);
+        }
+
+        $fullPath = $this->uploadDir . '/' . $photoPath;
+
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        $mime = mime_content_type($fullPath) ?: 'image/jpeg';
+        return response()->file($fullPath, ['Content-Type' => $mime]);
+    }
+
+    // ------------------------------------------------------------------
+    // Upload Signature Photo
+    // ------------------------------------------------------------------
+
+    public function uploadPhoto(Request $request, int $id, string $type)
+    {
+        if (!in_array($type, ['pemohon', 'menyetujui'])) {
+            abort(404);
+        }
+
+        $request->validate([
+            'photo' => ['required', 'file', 'image', 'max:5120'],
+        ]);
+
+        $upload = RansumUpload::findOrFail($id);
+
+        // Build subfolder named after original Excel file (without extension)
+        $baseName  = pathinfo($upload->original_filename, PATHINFO_FILENAME);
+        $safeBase  = preg_replace('/[^A-Za-z0-9_\-]/', '_', $baseName);
+        $subDir    = $this->uploadDir . '/' . $safeBase;
+        File::ensureDirectoryExists($subDir, 0755);
+
+        // Name the image after the signer
+        $signerName = $type === 'pemohon' ? $upload->pemohon : $upload->menyetujui;
+        $safeSigner = $signerName
+            ? preg_replace('/[^A-Za-z0-9_\-]/', '_', $signerName)
+            : $type;
+
+        $ext      = strtolower($request->file('photo')->getClientOriginalExtension()) ?: 'jpg';
+        $filename = $safeSigner . '.' . $ext;
+
+        // Remove old photo if different filename
+        $oldPhoto = $upload->{$type . '_photo'};
+        if ($oldPhoto && $oldPhoto !== ($safeBase . '/' . $filename)) {
+            $oldPath = $this->uploadDir . '/' . $oldPhoto;
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+        }
+
+        $request->file('photo')->move($subDir, $filename);
+
+        $upload->update([$type . '_photo' => $safeBase . '/' . $filename]);
+
+        return redirect()->route('admin.ransum.preview', $upload->id)
+            ->with('success', __('Foto :type berhasil diupload.', ['type' => ucfirst($type)]));
+    }
+
+    // ------------------------------------------------------------------
     // Destroy – delete upload record + file
     // ------------------------------------------------------------------
 
@@ -189,6 +264,14 @@ class RansumController extends Controller
         $filePath = $this->uploadDir . '/' . $upload->stored_filename;
         if (file_exists($filePath)) {
             unlink($filePath);
+        }
+
+        // Remove signature photos subfolder if it exists
+        $baseName = pathinfo($upload->original_filename, PATHINFO_FILENAME);
+        $safeBase = preg_replace('/[^A-Za-z0-9_\-]/', '_', $baseName);
+        $subDir   = $this->uploadDir . '/' . $safeBase;
+        if (is_dir($subDir)) {
+            File::deleteDirectory($subDir);
         }
 
         $upload->delete();

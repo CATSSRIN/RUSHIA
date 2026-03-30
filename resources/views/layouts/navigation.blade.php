@@ -33,9 +33,6 @@
                 @auth
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @if(auth()->user()->is_admin)
-                        <x-nav-link :href="route('admin.export.index')" :active="request()->routeIs('admin.export.*')">
-                            {{ __('Export') }}
-                        </x-nav-link>
                         <x-nav-link :href="route('admin.ransum.index')" :active="request()->routeIs('admin.ransum.*')">
                             {{ __('Import Ransum') }}
                         </x-nav-link>
@@ -122,7 +119,6 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             @if(auth()->user()->is_admin)
-                <x-responsive-nav-link :href="route('admin.export.index')" :active="request()->routeIs('admin.export.*')">{{ __('Export') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.ransum.index')" :active="request()->routeIs('admin.ransum.*')">{{ __('Import Ransum') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.orders.index')" :active="request()->routeIs('admin.orders.*')">{{ __('Orders') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.vendors.index')" :active="request()->routeIs('admin.vendors.*')">{{ __('Vendors') }}</x-responsive-nav-link>
