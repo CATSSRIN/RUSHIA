@@ -63,6 +63,9 @@ class RansumParser
         'good_received'   => 14,
     ];
 
+    /** Keywords that mark the start of the signature block (case-insensitive). */
+    private const SIGNATURE_BLOCK_KEYWORDS = ['pemohon', 'menyetujui'];
+
     /** Regex to reject non-name values (labels/keywords) in signature rows. */
     private const SIGNATURE_LABEL_PATTERN = '/pemohon|menyetujui|tanggal|date|ttd/i';
 
@@ -132,6 +135,11 @@ class RansumParser
                 $currentSection = $colA ?: 'UNKNOWN';
                 $sections[$currentSection] = $sections[$currentSection] ?? [];
                 continue;
+            }
+
+            // Stop processing items when the signature block is reached
+            if ($this->rowContainsSignatureKeyword($row)) {
+                break;
             }
 
             // Skip completely empty rows or rows without a name/code
@@ -220,6 +228,23 @@ class RansumParser
         foreach ($keywords as $kw) {
             if (str_starts_with($lower, $kw)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true when any cell in the row contains a signature block keyword.
+     * Used to detect the pemohon/menyetujui footer and stop item parsing.
+     */
+    private function rowContainsSignatureKeyword(array $row): bool
+    {
+        foreach ($row as $cell) {
+            $lower = strtolower(trim((string)($cell ?? '')));
+            foreach (self::SIGNATURE_BLOCK_KEYWORDS as $keyword) {
+                if (str_contains($lower, $keyword)) {
+                    return true;
+                }
             }
         }
         return false;
