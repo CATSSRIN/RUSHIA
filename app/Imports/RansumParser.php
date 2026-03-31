@@ -30,12 +30,13 @@ namespace App\Imports;
  *   6  harga
  *   7  satuan
  *   8  qty  (PEMESANAN / ORDER)
- *   9  non_bkp
- *  10  bkp
- *  11  ppn_11
- *  12  ket_remarks
- *  13  status_received
- *  14  good_received
+ *   9  jumlah  (TOTAL = qty × harga — skipped, not stored)
+ *  10  non_bkp
+ *  11  bkp
+ *  12  ppn_11
+ *  13  ket_remarks
+ *  14  status_received
+ *  15  good_received
  */
 class RansumParser
 {
@@ -55,12 +56,13 @@ class RansumParser
         'harga'           => 6,
         'satuan'          => 7,
         'qty'             => 8,
-        'non_bkp'         => 9,
-        'bkp'             => 10,
-        'ppn_11'          => 11,
-        'ket_remarks'     => 12,
-        'status_received' => 13,
-        'good_received'   => 14,
+        // index 9 = JUMLAH (total = qty × harga) — intentionally skipped, not stored
+        'non_bkp'         => 10,
+        'bkp'             => 11,
+        'ppn_11'          => 12,
+        'ket_remarks'     => 13,
+        'status_received' => 14,
+        'good_received'   => 15,
     ];
 
     /** Keywords that mark the start of the signature block (case-insensitive). */
