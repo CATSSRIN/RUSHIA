@@ -112,8 +112,7 @@
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Items') }}</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Merk/Spec') }}</th>
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('PPN') }}</th>
-                                    <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Supplier') }}</th>
-                                    <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Harga') }}</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Harga Supplier') }}</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Satuan') }}</th>
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Qty') }}</th>
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Non BKP') }}</th>
@@ -133,8 +132,13 @@
                                         <td class="px-3 py-2 text-gray-600">{{ $item['items'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-gray-600">{{ $item['merk_spec'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['ppn'] !== null ? number_format($item['ppn'], 0, ',', '.') : '-' }}</td>
-                                        <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['supplier'] ?? '-' }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-800">{{ $item['harga'] !== null ? number_format($item['harga'], 0, ',', '.') : '-' }}</td>
+                                        <td class="px-3 py-2 text-gray-600 whitespace-nowrap">
+                                            {{ $item['supplier'] ?? '-' }}
+                                            @if($item['harga'] !== null)
+                                                <span class="text-gray-400 mx-1">|</span>
+                                                <span class="text-gray-800">{{ number_format($item['harga'], 0, ',', '.') }}</span>
+                                            @endif
+                                        </td>
                                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['satuan'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-800">{{ $item['qty'] !== null ? number_format($item['qty'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['non_bkp'] !== null ? number_format($item['non_bkp'], 0, ',', '.') : '-' }}</td>
