@@ -41,6 +41,31 @@ class RansumParser
 {
     private array $rows;
 
+    /** Resolved column indices for item rows (0-based). */
+    private ?array $colMap = null;
+
+    /** Default column positions (0-based) if header row detection fails. */
+    private const DEFAULT_COL = [
+        'nama_ransum'     => 0,
+        'kode_item'       => 1,
+        'items'           => 2,
+        'merk_spec'       => 3,
+        'ppn'             => 4,
+        'supplier'        => 5,
+        'harga'           => 6,
+        'satuan'          => 7,
+        'qty'             => 8,
+        'non_bkp'         => 9,
+        'bkp'             => 10,
+        'ppn_11'          => 11,
+        'ket_remarks'     => 12,
+        'status_received' => 13,
+        'good_received'   => 14,
+    ];
+
+    /** Regex to reject non-name values (labels/keywords) in signature rows. */
+    private const SIGNATURE_LABEL_PATTERN = '/pemohon|menyetujui|tanggal|date|ttd/i';
+
     public function __construct(array $rows)
     {
         $this->rows = $rows;
@@ -193,25 +218,158 @@ class RansumParser
         return false;
     }
 
+    /**
+     * Detect item column indices from the header row (row 11, index 10).
+     * Falls back to DEFAULT_COL if detection fails.
+     */
+    private function getColMap(): array
+    {
+        if ($this->colMap !== null) {
+            return $this->colMap;
+        }
+
+        // Row 11 = index 10
+        $headerRow = $this->rows[10] ?? [];
+
+        // Patterns ordered carefully to avoid false matches (ppn_11 before ppn, bkp before non_bkp)
+        $patterns = [
+            'ppn_11'          => '/ppn.*11|11.*ppn/i',
+            'non_bkp'         => '/non.*bkp/i',
+            'status_received' => '/status.*rec|received.*status/i',
+            'good_received'   => '/good.*rec|gr\b/i',
+            'ket_remarks'     => '/ket\.?\s*remarks|ket\b|remarks/i',
+            'nama_ransum'     => '/nama.*ransum|ransum/i',
+            'kode_item'       => '/kode.*item/i',
+            'items'           => '/^items?$/i',
+            'merk_spec'       => '/merk|spec/i',
+            'ppn'             => '/^ppn$/i',
+            'supplier'        => '/supplier/i',
+            'harga'           => '/harga/i',
+            'satuan'          => '/satuan/i',
+            'qty'             => '/qty|pemesanan|order/i',
+            'bkp'             => '/^bkp$/i',
+        ];
+
+        $map = self::DEFAULT_COL;
+        $assigned = [];
+
+        foreach ($headerRow as $idx => $cell) {
+            $cell = trim((string) ($cell ?? ''));
+            if ($cell === '') {
+                continue;
+            }
+            foreach ($patterns as $field => $pattern) {
+                if (!isset($assigned[$field]) && preg_match($pattern, $cell)) {
+                    $map[$field]      = $idx;
+                    $assigned[$field] = true;
+                    break;
+                }
+            }
+        }
+
+        $this->colMap = $map;
+        return $this->colMap;
+    }
+
     private function mapItemRow(array $row, string $section): array
     {
+        $c = $this->getColMap();
+
         return [
             'section'         => $section,
-            'nama_ransum'     => $this->str($row[0] ?? null),
-            'kode_item'       => $this->str($row[1] ?? null),
-            'items'           => $this->str($row[2] ?? null),
-            'merk_spec'       => $this->str($row[3] ?? null),
-            'ppn'             => $this->numeric($row[4] ?? null),
-            'supplier'        => $this->str($row[5] ?? null),
-            'harga'           => $this->numeric($row[6] ?? null),
-            'satuan'          => $this->str($row[7] ?? null),
-            'qty'             => $this->numeric($row[8] ?? null),
-            'non_bkp'         => $this->numeric($row[9] ?? null),
-            'bkp'             => $this->numeric($row[10] ?? null),
-            'ppn_11'          => $this->numeric($row[11] ?? null),
-            'ket_remarks'     => $this->str($row[12] ?? null),
-            'status_received' => $this->str($row[13] ?? null),
-            'good_received'   => $this->str($row[14] ?? null),
+            'nama_ransum'     => $this->str($row[$c['nama_ransum']] ?? null),
+            'kode_item'       => $this->str($row[$c['kode_item']] ?? null),
+            'items'           => $this->str($row[$c['items']] ?? null),
+            'merk_spec'       => $this->str($row[$c['merk_spec']] ?? null),
+            'ppn'             => $this->numeric($row[$c['ppn']] ?? null),
+            'supplier'        => $this->str($row[$c['supplier']] ?? null),
+            'harga'           => $this->numeric($row[$c['harga']] ?? null),
+            'satuan'          => $this->str($row[$c['satuan']] ?? null),
+            'qty'             => $this->numeric($row[$c['qty']] ?? null),
+            'non_bkp'         => $this->numeric($row[$c['non_bkp']] ?? null),
+            'bkp'             => $this->numeric($row[$c['bkp']] ?? null),
+            'ppn_11'          => $this->numeric($row[$c['ppn_11']] ?? null),
+            'ket_remarks'     => $this->str($row[$c['ket_remarks']] ?? null),
+            'status_received' => $this->str($row[$c['status_received']] ?? null),
+            'good_received'   => $this->str($row[$c['good_received']] ?? null),
+        ];
+    }
+
+    /**
+     * Parse signature block from the bottom of the spreadsheet.
+     * Returns ['pemohon' => string|null, 'menyetujui' => string|null].
+     *
+     * Typical layout (appears after all items, near end of file):
+     *   Row X  : ... "Pemohon,"  ...  "Menyetujui,"  ...
+     *   Row X+1: (signature space)
+     *   Row X+2: ... [name1]  ...  [name2]  ...
+     */
+    public function parseSignatures(): array
+    {
+        $pemohon    = null;
+        $menyetujui = null;
+
+        $totalRows = count($this->rows);
+        // Scan from the end, limit to last 30 rows to avoid false positives in item rows
+        $startIdx = max(11, $totalRows - 30);
+
+        for ($i = $startIdx; $i < $totalRows; $i++) {
+            $row = $this->rows[$i] ?? [];
+            $rowText = strtolower(implode(' ', array_map(fn($v) => trim((string)($v ?? '')), $row)));
+
+            $hasPemohon    = str_contains($rowText, 'pemohon');
+            $hasMenyetujui = str_contains($rowText, 'menyetujui');
+
+            if (!$hasPemohon && !$hasMenyetujui) {
+                continue;
+            }
+
+            // Found the label row – find column indices for each label
+            $pemohonCol    = null;
+            $menyetujuiCol = null;
+
+            foreach ($row as $colIdx => $cell) {
+                $cellLower = strtolower(trim((string)($cell ?? '')));
+                if ($pemohonCol === null && str_contains($cellLower, 'pemohon')) {
+                    $pemohonCol = $colIdx;
+                }
+                if ($menyetujuiCol === null && str_contains($cellLower, 'menyetujui')) {
+                    $menyetujuiCol = $colIdx;
+                }
+            }
+
+            // Look up to 3 rows below for the actual name
+            for ($offset = 1; $offset <= 3; $offset++) {
+                $nameRow = $this->rows[$i + $offset] ?? [];
+
+                if ($pemohon === null && $pemohonCol !== null) {
+                    $val = $this->str($nameRow[$pemohonCol] ?? null);
+                    // Accept if it looks like a name (not another label keyword)
+                    if ($val !== null && !preg_match(self::SIGNATURE_LABEL_PATTERN, $val)) {
+                        $pemohon = $val;
+                    }
+                }
+
+                if ($menyetujui === null && $menyetujuiCol !== null) {
+                    $val = $this->str($nameRow[$menyetujuiCol] ?? null);
+                    if ($val !== null && !preg_match(self::SIGNATURE_LABEL_PATTERN, $val)) {
+                        $menyetujui = $val;
+                    }
+                }
+
+                if ($pemohon !== null && $menyetujui !== null) {
+                    break;
+                }
+            }
+
+            if ($pemohon !== null || $menyetujui !== null) {
+                break;
+            }
+        }
+
+        return [
+            'pemohon'    => $pemohon,
+            'menyetujui' => $menyetujui,
         ];
     }
 }

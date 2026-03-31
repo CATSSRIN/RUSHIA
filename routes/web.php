@@ -70,6 +70,8 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::post('ransum/upload', [RansumController::class, 'upload'])->name('ransum.upload');
     Route::get('ransum/{id}/preview', [RansumController::class, 'preview'])->name('ransum.preview');
     Route::post('ransum/{id}/import', [RansumController::class, 'import'])->name('ransum.import');
+    Route::post('ransum/{id}/photo/{type}', [RansumController::class, 'uploadPhoto'])->name('ransum.photo');
+    Route::get('ransum/{id}/photo/{type}', [RansumController::class, 'servePhoto'])->name('ransum.photo.serve');
     Route::delete('ransum/{id}', [RansumController::class, 'destroy'])->name('ransum.destroy');
 
     Route::resource('vendors', VendorController::class)->except(['show']);
