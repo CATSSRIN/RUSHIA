@@ -185,11 +185,20 @@ class ExportController extends Controller
             return '<html><body><p>The file is empty.</p></body></html>';
         }
 
+        // Determine which column indices to skip (e.g. calculated JML/JUMLAH totals).
+        $skipIndices = [];
+        foreach ($rows[0] as $idx => $header) {
+            $normalized = strtolower(trim((string) $header));
+            if ($normalized === 'jml' || $normalized === 'jumlah') {
+                $skipIndices[$idx] = true;
+            }
+        }
+
         $style = '<style>body{font-family:sans-serif;font-size:12px;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ccc;padding:4px 8px;text-align:left;}th{background:#f0f0f0;}</style>';
-        $thead = '<thead><tr>' . implode('', array_map(fn ($h) => '<th>' . htmlspecialchars((string) $h) . '</th>', $rows[0])) . '</tr></thead>';
+        $thead = '<thead><tr>' . implode('', array_map(fn ($h) => '<th>' . htmlspecialchars((string) $h) . '</th>', array_diff_key($rows[0], $skipIndices))) . '</tr></thead>';
         $tbody = '<tbody>';
         foreach (array_slice($rows, 1) as $row) {
-            $tbody .= '<tr>' . implode('', array_map(fn ($c) => '<td>' . htmlspecialchars((string) $c) . '</td>', $row)) . '</tr>';
+            $tbody .= '<tr>' . implode('', array_map(fn ($c) => '<td>' . htmlspecialchars((string) $c) . '</td>', array_diff_key($row, $skipIndices))) . '</tr>';
         }
         $tbody .= '</tbody>';
 
