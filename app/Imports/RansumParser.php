@@ -293,7 +293,7 @@ class RansumParser
             'ppn'             => '/^ppn$/i',
             'supplier'        => '/supplier/i',
             'harga'           => '/harga/i',
-            'satuan'          => '/satuan/i',
+            'satuan'          => '/satuan|unit/i',
             'qty'             => '/qty|pemesanan|order/i',
             'bkp'             => '/^bkp$/i',
         ];
@@ -318,10 +318,33 @@ class RansumParser
         // Resolve conflicts: if an undetected field still holds its DEFAULT_COL index
         // and that same index was already claimed by a detected field, reset it to an
         // out-of-range sentinel so mapItemRow returns null instead of duplicating data.
+        //
+        // EXCEPTION: satuan (unit) column handling
+        // If satuan wasn't detected but qty was detected at index 7 (satuan's default position),
+        // this is likely because:
+        // a) The satuan header is missing or has a typo
+        // b) The qty pattern mistakenly matched the satuan column
+        // In standard BPB Ransum templates, satuan is at column H (index 7) and qty at column I (index 8).
+        // If qty was detected at 7, we prefer to keep satuan at 7 and move qty to 8.
         $detectedIndices = [];
         foreach ($assigned as $detectedField => $_) {
-            $detectedIndices[$map[$detectedField]] = true;
+            $detectedIndices[$map[$detectedField]] = $detectedField;
         }
+
+        // Special handling for satuan/qty conflict
+        if (!isset($assigned['satuan']) && isset($assigned['qty']) && $map['qty'] === 7) {
+            // qty was detected at index 7 (satuan's position)
+            // Check if index 8 is available for qty
+            if (!isset($detectedIndices[8])) {
+                // Move qty to index 8, keep satuan at 7
+                $map['qty'] = 8;
+                $detectedIndices[8] = 'qty';
+                unset($detectedIndices[7]);
+                // Satuan will stay at 7 (its DEFAULT_COL value)
+            }
+        }
+
+        // Now handle general conflicts
         foreach ($map as $field => $idx) {
             if (!isset($assigned[$field]) && isset($detectedIndices[$idx])) {
                 $map[$field] = PHP_INT_MAX;
