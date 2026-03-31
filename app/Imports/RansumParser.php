@@ -315,6 +315,19 @@ class RansumParser
             }
         }
 
+        // Resolve conflicts: if an undetected field still holds its DEFAULT_COL index
+        // and that same index was already claimed by a detected field, reset it to an
+        // out-of-range sentinel so mapItemRow returns null instead of duplicating data.
+        $detectedIndices = [];
+        foreach ($assigned as $detectedField => $_) {
+            $detectedIndices[$map[$detectedField]] = true;
+        }
+        foreach ($map as $field => $idx) {
+            if (!isset($assigned[$field]) && isset($detectedIndices[$idx])) {
+                $map[$field] = PHP_INT_MAX;
+            }
+        }
+
         $this->colMap = $map;
         return $this->colMap;
     }
