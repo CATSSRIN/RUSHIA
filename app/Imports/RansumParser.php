@@ -267,8 +267,10 @@ class RansumParser
     }
 
     /**
-     * Detect item column indices from the header row (row 11, index 10).
-     * Falls back to DEFAULT_COL if detection fails.
+     * Return fixed column indices for item rows.
+     * The BPB Ransum template always has columns in the fixed positions defined
+     * in DEFAULT_COL, so we read satuan and qty directly from their known columns
+     * (index 7 and 8 respectively) without dynamic detection.
      */
     private function getColMap(): array
     {
@@ -276,86 +278,7 @@ class RansumParser
             return $this->colMap;
         }
 
-        // Row 11 = index 10
-        $headerRow = $this->rows[10] ?? [];
-
-        // Patterns ordered carefully to avoid false matches (ppn_11 before ppn, bkp before non_bkp)
-        $patterns = [
-            'ppn_11'          => '/ppn.*11|11.*ppn/i',
-            'non_bkp'         => '/non.*bkp/i',
-            'status_received' => '/status.*rec|received.*status/i',
-            'good_received'   => '/good.*rec|gr\b/i',
-            'ket_remarks'     => '/ket\.?\s*remarks|ket\b|remarks/i',
-            'nama_ransum'     => '/nama.*ransum|ransum/i',
-            'kode_item'       => '/kode.*item/i',
-            'items'           => '/^items?$/i',
-            'merk_spec'       => '/merk|spec/i',
-            'ppn'             => '/^ppn$/i',
-            'supplier'        => '/supplier/i',
-            'harga'           => '/harga/i',
-            'satuan'          => '/satuan|unit/i',
-            'qty'             => '/qty|pemesanan|order/i',
-            'bkp'             => '/^bkp$/i',
-        ];
-
-        $map = self::DEFAULT_COL;
-        $assigned = [];
-
-        foreach ($headerRow as $idx => $cell) {
-            $cell = trim((string) ($cell ?? ''));
-            if ($cell === '') {
-                continue;
-            }
-            foreach ($patterns as $field => $pattern) {
-                if (!isset($assigned[$field]) && preg_match($pattern, $cell)) {
-                    $map[$field]      = $idx;
-                    $assigned[$field] = true;
-                    break;
-                }
-            }
-        }
-
-        // Resolve conflicts: if an undetected field still holds its DEFAULT_COL index
-        // and that same index was already claimed by a detected field, reset it to an
-        // out-of-range sentinel so mapItemRow returns null instead of duplicating data.
-        //
-        // BPB Ransum templates always place satuan (unit text) at column H (index 7) and
-        // qty (order quantity) at column I (index 8) in data rows.  The header row often
-        // uses a merged cell "PEMESANAN / ORDER" that spans H-I, so PhpSpreadsheet places
-        // the label at index 7 and returns null for index 8.  This causes the qty pattern
-        // to match at index 7 instead of the correct index 8.
-        $detectedIndices = [];
-        foreach ($assigned as $detectedField => $_) {
-            $detectedIndices[$map[$detectedField]] = $detectedField;
-        }
-
-        // If satuan was not explicitly detected and qty was detected at satuan's column
-        // (index 7), always move qty to index 8 so that satuan reads the correct unit
-        // text and qty reads the correct quantity.  This applies regardless of what else
-        // may have been detected at index 8.
-        if (!isset($assigned['satuan']) && isset($assigned['qty']) && $map['qty'] === self::DEFAULT_COL['satuan']) {
-            unset($detectedIndices[$map['qty']]);
-            $map['qty'] = self::DEFAULT_COL['qty'];
-            $detectedIndices[$map['qty']] = 'qty';
-        }
-
-        // General conflict resolution
-        foreach ($map as $field => $idx) {
-            if (!isset($assigned[$field]) && isset($detectedIndices[$idx])) {
-                $map[$field] = PHP_INT_MAX;
-            }
-        }
-
-        // Safety fallback: the template always has satuan at index 7 and qty at index 8;
-        // never allow conflict resolution to leave either field unreadable.
-        if ($map['satuan'] === PHP_INT_MAX) {
-            $map['satuan'] = self::DEFAULT_COL['satuan'];
-        }
-        if ($map['qty'] === PHP_INT_MAX) {
-            $map['qty'] = self::DEFAULT_COL['qty'];
-        }
-
-        $this->colMap = $map;
+        $this->colMap = self::DEFAULT_COL;
         return $this->colMap;
     }
 
