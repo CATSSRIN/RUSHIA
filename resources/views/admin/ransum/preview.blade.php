@@ -160,12 +160,12 @@
 
             <!-- Signature Section – Pemohon & Menyetujui (bottom right) -->
             <div class="flex justify-end pb-4">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full max-w-2xl">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full max-w-lg">
                     <h3 class="text-base font-semibold text-gray-800 mb-4">{{ __('Tanda Tangan') }}</h3>
-                    <div class="grid grid-cols-2 gap-6">
+                    <div class="grid grid-cols-2 gap-4">
 
                         {{-- Pemohon --}}
-                        <div class="flex flex-col items-center gap-3">
+                        <div class="flex flex-col items-center gap-2">
                             <span class="text-sm font-semibold text-gray-700">{{ __('Pemohon:') }}</span>
 
                             @if($upload->pemohon_photo)
@@ -173,12 +173,12 @@
                                      alt="{{ __('Tanda tangan pemohon') }}"
                                      class="w-40 h-28 object-contain border border-gray-200 rounded-lg bg-gray-50">
                             @else
-                                <div class="w-40 h-28 flex items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-xs">
+                                <div class="w-20 h-14 flex items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-xs text-center">
                                     {{ __('Belum ada foto') }}
                                 </div>
                             @endif
 
-                            <span class="text-sm text-gray-800 font-medium text-center">
+                            <span class="text-xs text-gray-800 font-medium text-center">
                                 {{ $upload->pemohon ?? '-' }}
                             </span>
 
@@ -188,11 +188,11 @@
                                   class="w-full">
                                 @csrf
                                 <label class="block text-xs text-gray-500 mb-1">{{ __('Upload foto TTD pemohon') }}</label>
-                                <div class="flex gap-2">
+                                <div class="flex gap-1">
                                     <input type="file" name="photo" accept="image/*"
-                                           class="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                                           class="block w-full text-xs text-gray-500 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
                                     <button type="submit"
-                                            class="shrink-0 px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition">
+                                            class="shrink-0 px-2 py-1 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition">
                                         {{ __('Simpan') }}
                                     </button>
                                 </div>
@@ -200,7 +200,7 @@
                         </div>
 
                         {{-- Menyetujui --}}
-                        <div class="flex flex-col items-center gap-3">
+                        <div class="flex flex-col items-center gap-2">
                             <span class="text-sm font-semibold text-gray-700">{{ __('Menyetujui:') }}</span>
 
                             @if($upload->menyetujui_photo)
@@ -208,12 +208,12 @@
                                      alt="{{ __('Tanda tangan menyetujui') }}"
                                      class="w-40 h-28 object-contain border border-gray-200 rounded-lg bg-gray-50">
                             @else
-                                <div class="w-40 h-28 flex items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-xs">
+                                <div class="w-20 h-14 flex items-center justify-center border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-xs text-center">
                                     {{ __('Belum ada foto') }}
                                 </div>
                             @endif
 
-                            <span class="text-sm text-gray-800 font-medium text-center">
+                            <span class="text-xs text-gray-800 font-medium text-center">
                                 {{ $upload->menyetujui ?? '-' }}
                             </span>
 
@@ -223,11 +223,11 @@
                                   class="w-full">
                                 @csrf
                                 <label class="block text-xs text-gray-500 mb-1">{{ __('Upload foto TTD menyetujui') }}</label>
-                                <div class="flex gap-2">
+                                <div class="flex gap-1">
                                     <input type="file" name="photo" accept="image/*"
-                                           class="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                                           class="block w-full text-xs text-gray-500 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
                                     <button type="submit"
-                                            class="shrink-0 px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition">
+                                            class="shrink-0 px-2 py-1 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition">
                                         {{ __('Simpan') }}
                                     </button>
                                 </div>

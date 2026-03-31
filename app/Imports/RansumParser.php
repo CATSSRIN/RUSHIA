@@ -144,6 +144,13 @@ class RansumParser
                 continue;
             }
 
+            // Skip label-only rows: colA has text but no other column has any data.
+            // These are typically section descriptors or notes (e.g. in the Frozen section)
+            // that should not be treated as item rows.
+            if ($colB === '' && $colA !== '' && $this->isLabelOnlyRow($row)) {
+                continue;
+            }
+
             // Data row – map to structured item
             $item = $this->mapItemRow($row, $currentSection ?? 'UNKNOWN');
 
@@ -216,6 +223,22 @@ class RansumParser
             }
         }
         return false;
+    }
+
+    /**
+     * Returns true when every column after colA (index 0) is empty.
+     * Such rows are descriptive labels (e.g. section notes in the Frozen section)
+     * and must not be treated as item rows.
+     */
+    private function isLabelOnlyRow(array $row): bool
+    {
+        $len = count($row);
+        for ($i = 1; $i < $len; $i++) {
+            if (trim((string) ($row[$i] ?? '')) !== '') {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
