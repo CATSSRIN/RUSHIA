@@ -319,36 +319,40 @@ class RansumParser
         // and that same index was already claimed by a detected field, reset it to an
         // out-of-range sentinel so mapItemRow returns null instead of duplicating data.
         //
-        // EXCEPTION: satuan (unit) column handling
-        // If satuan wasn't detected but qty was detected at index 7 (satuan's default position),
-        // this is likely because:
-        // a) The satuan header is missing or has a typo
-        // b) The qty pattern mistakenly matched the satuan column
-        // In standard BPB Ransum templates, satuan is at column H (index 7) and qty at column I (index 8).
-        // If qty was detected at 7, we prefer to keep satuan at 7 and move qty to 8.
+        // BPB Ransum templates always place satuan (unit text) at column H (index 7) and
+        // qty (order quantity) at column I (index 8) in data rows.  The header row often
+        // uses a merged cell "PEMESANAN / ORDER" that spans H-I, so PhpSpreadsheet places
+        // the label at index 7 and returns null for index 8.  This causes the qty pattern
+        // to match at index 7 instead of the correct index 8.
         $detectedIndices = [];
         foreach ($assigned as $detectedField => $_) {
             $detectedIndices[$map[$detectedField]] = $detectedField;
         }
 
-        // Special handling for satuan/qty conflict
-        if (!isset($assigned['satuan']) && isset($assigned['qty']) && $map['qty'] === 7) {
-            // qty was detected at index 7 (satuan's position)
-            // Check if index 8 is available for qty
-            if (!isset($detectedIndices[8])) {
-                // Move qty to index 8, keep satuan at 7
-                $map['qty'] = 8;
-                $detectedIndices[8] = 'qty';
-                unset($detectedIndices[7]);
-                // Satuan will stay at 7 (its DEFAULT_COL value)
-            }
+        // If satuan was not explicitly detected and qty was detected at satuan's column
+        // (index 7), always move qty to index 8 so that satuan reads the correct unit
+        // text and qty reads the correct quantity.  This applies regardless of what else
+        // may have been detected at index 8.
+        if (!isset($assigned['satuan']) && isset($assigned['qty']) && $map['qty'] === self::DEFAULT_COL['satuan']) {
+            unset($detectedIndices[$map['qty']]);
+            $map['qty'] = self::DEFAULT_COL['qty'];
+            $detectedIndices[$map['qty']] = 'qty';
         }
 
-        // Now handle general conflicts
+        // General conflict resolution
         foreach ($map as $field => $idx) {
             if (!isset($assigned[$field]) && isset($detectedIndices[$idx])) {
                 $map[$field] = PHP_INT_MAX;
             }
+        }
+
+        // Safety fallback: the template always has satuan at index 7 and qty at index 8;
+        // never allow conflict resolution to leave either field unreadable.
+        if ($map['satuan'] === PHP_INT_MAX) {
+            $map['satuan'] = self::DEFAULT_COL['satuan'];
+        }
+        if ($map['qty'] === PHP_INT_MAX) {
+            $map['qty'] = self::DEFAULT_COL['qty'];
         }
 
         $this->colMap = $map;
