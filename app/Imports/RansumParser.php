@@ -27,9 +27,9 @@ namespace App\Imports;
  *   3  merk_spec
  *   4  ppn
  *   5  supplier
- *   6  harga
- *   7  satuan
- *   8  qty  (PEMESANAN / ORDER)
+ *   6  satuan
+ *   7  qty  (PEMESANAN / ORDER)
+ *   8  harga
  *   9  jumlah  (TOTAL = qty × harga — skipped, not stored)
  *  10  non_bkp
  *  11  bkp
@@ -53,9 +53,9 @@ class RansumParser
         'merk_spec'       => 3,
         'ppn'             => 4,
         'supplier'        => 5,
-        'harga'           => 6,
-        'satuan'          => 7,
-        'qty'             => 8,
+        'satuan'          => 6,
+        'qty'             => 7,
+        'harga'           => 8,
         // index 9 = JUMLAH (total = qty × harga) — intentionally skipped, not stored
         'non_bkp'         => 10,
         'bkp'             => 11,
@@ -271,8 +271,8 @@ class RansumParser
     /**
      * Return fixed column indices for item rows.
      * The BPB Ransum template always has columns in the fixed positions defined
-     * in DEFAULT_COL, so we read satuan and qty directly from their known columns
-     * (index 7 and 8 respectively) without dynamic detection.
+     * in DEFAULT_COL, so we read satuan, qty, and harga directly from their known
+     * columns (indices 6, 7, and 8 respectively) without dynamic detection.
      */
     private function getColMap(): array
     {
