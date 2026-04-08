@@ -134,14 +134,10 @@
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['ppn'] !== null ? number_format($item['ppn'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">
                                             {{ $item['supplier'] ?? '-' }}
-                                            @if($item['harga'] !== null)
-                                                <span class="text-gray-400 mx-1">|</span>
-                                                <span class="text-gray-800">{{ number_format($item['harga'], 0, ',', '.') }}</span>
-                                            @endif
                                         </td>
                                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['satuan'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-800">{{ $item['qty'] !== null ? number_format($item['qty'], 0, ',', '.') : '-' }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-600">{{ $item['non_bkp'] !== null ? number_format($item['non_bkp'], 0, ',', '.') : '-' }}</td>
+                                        <td class="px-3 py-2 text-right text-gray-600">{{ $item['harga'] !== null ? number_format($item['harga'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['bkp'] !== null ? number_format($item['bkp'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['ppn_11'] !== null ? number_format($item['ppn_11'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-gray-500 max-w-xs truncate">{{ $item['ket_remarks'] ?? '-' }}</td>
