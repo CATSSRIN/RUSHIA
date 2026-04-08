@@ -324,9 +324,9 @@ class RansumController extends Controller
     {
         $upload = RansumUpload::findOrFail($id);
 
-        if ($upload->status === 'imported') {
+        if ($upload->status !== 'pending') {
             return redirect()->route('admin.ransum.preview', $upload->id)
-                ->with('error', __('Data dari file ini sudah pernah difinalisasi.'));
+                ->with('error', __('Hanya upload dengan status pending yang dapat difinalisasi.'));
         }
 
         if (! RansumItem::where('ransum_upload_id', $id)->exists()) {
