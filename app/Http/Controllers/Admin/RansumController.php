@@ -113,6 +113,20 @@ class RansumController extends Controller
     {
         $upload = RansumUpload::findOrFail($id);
 
+        // After import, show live DB records so edits are reflected immediately.
+        if ($upload->status === 'imported') {
+            $dbItems  = RansumItem::where('ransum_upload_id', $id)->orderBy('id')->get();
+            $grouped  = [];
+            foreach ($dbItems as $item) {
+                $sec = $item->section ?? 'UNKNOWN';
+                $grouped[$sec]['section']  = $sec;
+                $grouped[$sec]['items'][]  = $item->toArray();
+            }
+            $sections   = array_values($grouped);
+            $isEditable = true;
+            return view('admin.ransum.preview', compact('upload', 'sections', 'isEditable'));
+        }
+
         $filePath = $this->uploadDir . '/' . $upload->stored_filename;
 
         if (! file_exists($filePath)) {
@@ -130,7 +144,8 @@ class RansumController extends Controller
                 ->with('error', __('Gagal membaca file: ') . $e->getMessage());
         }
 
-        return view('admin.ransum.preview', compact('upload', 'sections'));
+        $isEditable = false;
+        return view('admin.ransum.preview', compact('upload', 'sections', 'isEditable'));
     }
 
     // ------------------------------------------------------------------
@@ -254,7 +269,70 @@ class RansumController extends Controller
     }
 
     // ------------------------------------------------------------------
-    // Destroy – delete upload record + file
+    // Item CRUD (only available after import)
+    // ------------------------------------------------------------------
+
+    public function storeItem(Request $request, int $id)
+    {
+        $upload = RansumUpload::findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $id)
+                ->with('error', __('Import data terlebih dahulu sebelum menambahkan item.'));
+        }
+
+        $validated = $request->validate($this->itemValidationRules());
+
+        RansumItem::create(array_merge(['ransum_upload_id' => $id], $validated));
+
+        return redirect()->route('admin.ransum.preview', $id)
+            ->with('success', __('Item berhasil ditambahkan.'));
+    }
+
+    public function updateItem(Request $request, int $id, int $itemId)
+    {
+        $upload = RansumUpload::findOrFail($id);
+        $item   = RansumItem::where('ransum_upload_id', $id)->findOrFail($itemId);
+
+        $validated = $request->validate($this->itemValidationRules());
+        $item->update($validated);
+
+        return redirect()->route('admin.ransum.preview', $id)
+            ->with('success', __('Item berhasil diperbarui.'));
+    }
+
+    public function destroyItem(int $id, int $itemId)
+    {
+        $upload = RansumUpload::findOrFail($id);
+        $item   = RansumItem::where('ransum_upload_id', $id)->findOrFail($itemId);
+        $item->delete();
+
+        return redirect()->route('admin.ransum.preview', $id)
+            ->with('success', __('Item berhasil dihapus.'));
+    }
+
+    private function itemValidationRules(): array
+    {
+        return [
+            'section'         => ['nullable', 'string', 'max:255'],
+            'nama_ransum'     => ['nullable', 'string', 'max:255'],
+            'kode_item'       => ['nullable', 'string', 'max:255'],
+            'items'           => ['nullable', 'string', 'max:255'],
+            'merk_spec'       => ['nullable', 'string', 'max:255'],
+            'ppn'             => ['nullable', 'numeric'],
+            'supplier'        => ['nullable', 'string', 'max:255'],
+            'harga'           => ['nullable', 'numeric'],
+            'satuan'          => ['nullable', 'string', 'max:255'],
+            'qty'             => ['nullable', 'numeric'],
+            'non_bkp'         => ['nullable', 'numeric'],
+            'bkp'             => ['nullable', 'numeric'],
+            'ppn_11'          => ['nullable', 'numeric'],
+            'ket_remarks'     => ['nullable', 'string', 'max:1000'],
+            'status_received' => ['nullable', 'string', 'max:255'],
+            'good_received'   => ['nullable', 'string', 'max:255'],
+        ];
+    }
+
     // ------------------------------------------------------------------
 
     public function destroy(int $id)
