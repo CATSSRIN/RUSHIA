@@ -269,10 +269,10 @@ class RansumParser
     }
 
     /**
-     * Return fixed column indices for item rows.
-     * The BPB Ransum template always has columns in the fixed positions defined
-     * in DEFAULT_COL, so we read satuan, qty, and harga directly from their known
-     * columns (indices 6, 7, and 8 respectively) without dynamic detection.
+     * Return column indices for item rows.
+     * First attempts to auto-detect column positions from the main header row
+     * (row 11, 0-based index 10).  Falls back to DEFAULT_COL when detection
+     * yields fewer than 8 recognised columns.
      */
     private function getColMap(): array
     {
@@ -280,8 +280,74 @@ class RansumParser
             return $this->colMap;
         }
 
-        $this->colMap = self::DEFAULT_COL;
+        $headerRow = $this->rows[10] ?? [];
+        $detected  = $this->detectColumnPositions($headerRow);
+
+        $this->colMap = count($detected) >= 8
+            ? array_merge(self::DEFAULT_COL, $detected)
+            : self::DEFAULT_COL;
+
         return $this->colMap;
+    }
+
+    /**
+     * Scan a header row for known column-name keywords and return a
+     * field → column-index map.
+     *
+     * Patterns are ordered from most-specific to least-specific so that
+     * "non bkp" is consumed before the shorter "bkp" keyword, etc.
+     * Already-matched indices are skipped to prevent double-assignment.
+     */
+    private function detectColumnPositions(array $row): array
+    {
+        // field => list of substrings to match (case-insensitive, first wins)
+        $patterns = [
+            'non_bkp'         => ['non bkp', 'non-bkp', 'nonbkp'],
+            'ppn_11'          => ['ppn 11', 'ppn11', '11%'],
+            'ket_remarks'     => ['ket. remarks', 'ket remarks', 'remarks', 'ket.'],
+            'status_received' => ['status received', 'status terima', 'status diterima', 'status'],
+            'good_received'   => ['good received', 'diterima baik', 'good'],
+            'nama_ransum'     => ['nama ransum', 'nama'],
+            'kode_item'       => ['kode item', 'kode'],
+            'items'           => ['items'],
+            'merk_spec'       => ['merk/spec', 'merk'],
+            'ppn'             => ['ppn'],
+            'supplier'        => ['harga supplier', 'harga sup'],
+            'satuan'          => ['satuan'],
+            'qty'             => ['qty', 'pemesanan'],
+            'harga'           => ['harga'],
+            'bkp'             => ['bkp'],
+        ];
+
+        $map         = [];
+        $usedIndices = [];
+
+        foreach ($patterns as $field => $keywords) {
+            if (isset($map[$field])) {
+                continue; // already matched (e.g. duplicate key won't appear here, but guard anyway)
+            }
+
+            foreach ($row as $colIdx => $cell) {
+                if (in_array($colIdx, $usedIndices, true)) {
+                    continue;
+                }
+
+                $cellLower = strtolower(trim((string) ($cell ?? '')));
+                if ($cellLower === '') {
+                    continue;
+                }
+
+                foreach ($keywords as $keyword) {
+                    if (str_contains($cellLower, $keyword)) {
+                        $map[$field]   = $colIdx;
+                        $usedIndices[] = $colIdx;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return $map;
     }
 
     private function mapItemRow(array $row, string $section): array

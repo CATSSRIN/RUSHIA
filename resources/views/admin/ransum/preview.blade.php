@@ -4,13 +4,25 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Preview BPB Ransum') }}: {{ $upload->original_filename }}
             </h2>
-            <a href="{{ route('admin.ransum.index') }}"
-               class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                {{ __('Kembali') }}
-            </a>
+            <div class="flex items-center gap-3">
+                @if($isEditable)
+                    <button id="btn-toggle-edit"
+                            onclick="toggleEditMode()"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        <span id="btn-toggle-edit-label">{{ __('Edit') }}</span>
+                    </button>
+                @endif
+                <a href="{{ route('admin.ransum.index') }}"
+                   class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    {{ __('Kembali') }}
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -121,6 +133,9 @@
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Ket. Remarks') }}</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Status Received') }}</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Good Received') }}</th>
+                                    @if($isEditable)
+                                        <th class="edit-col px-3 py-2 text-center font-semibold text-gray-500 uppercase whitespace-nowrap hidden">{{ __('Aksi') }}</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
@@ -140,14 +155,42 @@
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['harga'] !== null ? number_format($item['harga'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['bkp'] !== null ? number_format($item['bkp'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['ppn_11'] !== null ? number_format($item['ppn_11'], 0, ',', '.') : '-' }}</td>
-                                        <td class="px-3 py-2 text-gray-500 max-w-xs truncate">{{ $item['ket_remarks'] ?? '-' }}</td>
+                                        <td class="px-3 py-2 text-gray-500">{{ $item['ket_remarks'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['status_received'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['good_received'] ?? '-' }}</td>
+                                        @if($isEditable)
+                                            <td class="edit-col px-3 py-2 text-center whitespace-nowrap hidden">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <button type="button"
+                                                        onclick="openEditModal({{ $item['id'] }}, {{ json_encode($item) }})"
+                                                        class="text-indigo-600 hover:text-indigo-800 font-medium">{{ __('Edit') }}</button>
+                                                    <form method="POST"
+                                                          action="{{ route('admin.ransum.items.destroy', [$upload->id, $item['id']]) }}"
+                                                          onsubmit="return confirm('{{ __('Hapus item ini?') }}')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-500 hover:text-red-700 font-medium">{{ __('Hapus') }}</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
+                    @if($isEditable)
+                        <div class="edit-col hidden px-6 py-3 border-t border-gray-100 bg-gray-50">
+                            <button type="button"
+                                onclick="openAddModal({{ json_encode($section['section']) }})"
+                                class="inline-flex items-center gap-1 text-sm text-green-700 hover:text-green-900 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                {{ __('Tambah Item') }}
+                            </button>
+                        </div>
+                    @endif
                 </div>
             @empty
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
@@ -157,6 +200,19 @@
                     <p class="text-gray-400">{{ __('Tidak ada data item yang dapat diparse dari file ini.') }}</p>
                 </div>
             @endforelse
+
+            @if($isEditable)
+                <div class="edit-col hidden flex justify-end pb-2">
+                    <button type="button"
+                        onclick="openAddModal('')"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        {{ __('Tambah Item Baru') }}
+                    </button>
+                </div>
+            @endif
 
             <!-- Signature Section – Pemohon & Menyetujui (bottom right) -->
             <div class="flex justify-end pb-4">
@@ -257,4 +313,196 @@
 
         </div>
     </div>
+
+    @if($isEditable)
+    {{-- ============================================================
+         Shared Item Modal (Edit / Add)
+         ============================================================ --}}
+    <div id="item-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-screen overflow-y-auto">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h3 id="modal-title" class="font-semibold text-lg text-gray-800">{{ __('Edit Item') }}</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="item-form" method="POST" action="">
+                @csrf
+                <input type="hidden" name="_method" id="form-method" value="PATCH">
+
+                <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+
+                    <div class="lg:col-span-3">
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Section') }}</label>
+                        <input type="text" name="section" id="f-section"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Nama Ransum') }}</label>
+                        <input type="text" name="nama_ransum" id="f-nama_ransum"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Kode Item') }}</label>
+                        <input type="text" name="kode_item" id="f-kode_item"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Items') }}</label>
+                        <input type="text" name="items" id="f-items"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Merk/Spec') }}</label>
+                        <input type="text" name="merk_spec" id="f-merk_spec"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('PPN (%)') }}</label>
+                        <input type="number" step="any" name="ppn" id="f-ppn"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Harga Supplier') }}</label>
+                        <input type="text" name="supplier" id="f-supplier"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Satuan') }}</label>
+                        <input type="text" name="satuan" id="f-satuan"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Qty') }}</label>
+                        <input type="number" step="any" name="qty" id="f-qty"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Non BKP') }}</label>
+                        <input type="number" step="any" name="harga" id="f-harga"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('BKP') }}</label>
+                        <input type="number" step="any" name="bkp" id="f-bkp"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('PPN 11%') }}</label>
+                        <input type="number" step="any" name="ppn_11" id="f-ppn_11"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div class="lg:col-span-3">
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Ket. Remarks') }}</label>
+                        <textarea name="ket_remarks" id="f-ket_remarks" rows="2"
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Status Received') }}</label>
+                        <input type="text" name="status_received" id="f-status_received"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Good Received') }}</label>
+                        <input type="text" name="good_received" id="f-good_received"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                    </div>
+
+                </div>
+
+                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+                    <button type="button" onclick="closeModal()" class="text-sm text-gray-500 hover:text-gray-700">{{ __('Batal') }}</button>
+                    <button type="submit"
+                            class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">
+                        {{ __('Simpan') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const UPLOAD_ID    = {{ $upload->id }};
+        const STORE_URL    = "{{ route('admin.ransum.items.store', $upload->id) }}";
+        const UPDATE_BASE  = "{{ url('admin/ransum/' . $upload->id . '/items') }}";
+
+        let editMode = false;
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.querySelectorAll('.edit-col').forEach(el => el.classList.toggle('hidden', !editMode));
+            const label = document.getElementById('btn-toggle-edit-label');
+            const btn   = document.getElementById('btn-toggle-edit');
+            if (editMode) {
+                label.textContent = '{{ __("Selesai Edit") }}';
+                btn.classList.replace('bg-amber-500', 'bg-gray-500');
+                btn.classList.replace('hover:bg-amber-600', 'hover:bg-gray-600');
+            } else {
+                label.textContent = '{{ __("Edit") }}';
+                btn.classList.replace('bg-gray-500', 'bg-amber-500');
+                btn.classList.replace('hover:bg-gray-600', 'hover:bg-amber-600');
+            }
+        }
+
+        function openEditModal(itemId, itemData) {
+            document.getElementById('modal-title').textContent = '{{ __("Edit Item") }}';
+            document.getElementById('form-method').value = 'PATCH';
+            document.getElementById('item-form').action = UPDATE_BASE + '/' + itemId;
+
+            const fields = ['section','nama_ransum','kode_item','items','merk_spec','ppn',
+                            'supplier','satuan','qty','harga','bkp','ppn_11',
+                            'ket_remarks','status_received','good_received'];
+            fields.forEach(f => {
+                const el = document.getElementById('f-' + f);
+                if (el) el.value = itemData[f] !== null && itemData[f] !== undefined ? itemData[f] : '';
+            });
+
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function openAddModal(section) {
+            document.getElementById('modal-title').textContent = '{{ __("Tambah Item") }}';
+            document.getElementById('form-method').value = 'POST';
+            document.getElementById('item-form').action = STORE_URL;
+
+            const fields = ['nama_ransum','kode_item','items','merk_spec','ppn',
+                            'supplier','satuan','qty','harga','bkp','ppn_11',
+                            'ket_remarks','status_received','good_received'];
+            fields.forEach(f => {
+                const el = document.getElementById('f-' + f);
+                if (el) el.value = '';
+            });
+            document.getElementById('f-section').value = section || '';
+
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+        }
+
+        // Close modal when clicking backdrop
+        document.getElementById('item-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+    @endif
+
 </x-app-layout>
