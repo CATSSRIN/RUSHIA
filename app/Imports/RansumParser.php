@@ -270,9 +270,11 @@ class RansumParser
 
     /**
      * Return column indices for item rows.
-     * First attempts to auto-detect column positions from the main header row
-     * (row 11, 0-based index 10).  Falls back to DEFAULT_COL when detection
-     * yields fewer than 8 recognised columns.
+     * Attempts to auto-detect column positions from the main header row
+     * (row 11, 0-based index 10).  Any detected positions override the
+     * DEFAULT_COL fallback, so even a partially-recognised header row
+     * (e.g. only "REMARKS" present) produces the correct mapping for the
+     * detected fields while keeping defaults for the rest.
      */
     private function getColMap(): array
     {
@@ -283,9 +285,9 @@ class RansumParser
         $headerRow = $this->rows[10] ?? [];
         $detected  = $this->detectColumnPositions($headerRow);
 
-        $this->colMap = count($detected) >= 8
-            ? array_merge(self::DEFAULT_COL, $detected)
-            : self::DEFAULT_COL;
+        // Always merge: detected values override DEFAULT_COL for matched fields;
+        // unmatched fields keep their default positions.
+        $this->colMap = array_merge(self::DEFAULT_COL, $detected);
 
         return $this->colMap;
     }
@@ -304,7 +306,7 @@ class RansumParser
         $patterns = [
             'non_bkp'         => ['non bkp', 'non-bkp', 'nonbkp'],
             'ppn_11'          => ['ppn 11', 'ppn11', '11%'],
-            'ket_remarks'     => ['ket. remarks', 'ket remarks', 'remarks', 'ket.'],
+            'ket_remarks'     => ['ket. remarks', 'ket remarks', 'remarks'],
             'status_received' => ['status received', 'status terima', 'status diterima', 'status'],
             'good_received'   => ['good received', 'diterima baik', 'good'],
             'nama_ransum'     => ['nama ransum', 'nama'],
