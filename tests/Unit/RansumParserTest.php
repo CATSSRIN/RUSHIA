@@ -7,6 +7,9 @@ use PHPUnit\Framework\TestCase;
 
 class RansumParserTest extends TestCase
 {
+    /** Number of columns in the standard spreadsheet layout. */
+    private const COL_COUNT = 16;
+
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
@@ -18,22 +21,22 @@ class RansumParserTest extends TestCase
      * Row  11   : section header row ("KODE ITEM" in column B).
      * Row  12   : one data item row (customisable via $dataRow).
      *
-     * @param array $headerRow   16-element array for the column header row.
-     * @param array $dataRow     16-element array for the item data row.
+     * @param array $headerRow   COL_COUNT-element array for the column header row.
+     * @param array $dataRow     COL_COUNT-element array for the item data row.
      */
     private function buildRows(array $headerRow, array $dataRow): array
     {
-        $empty = array_fill(0, 16, null);
+        $empty = array_fill(0, self::COL_COUNT, null);
 
         $rows = array_fill(0, 10, $empty);   // rows 0-9 (index 0-9)
         $rows[] = $headerRow;                 // row index 10 (row 11, 1-based)
-        $rows[] = ['BAHAN KERING', 'KODE ITEM', null, null, null, null, null, null, null, null, null, null, null, null, null, null]; // section header
+        $rows[] = array_replace($empty, [0 => 'BAHAN KERING', 1 => 'KODE ITEM']); // section header
         $rows[] = $dataRow;                   // data row
 
         return $rows;
     }
 
-    /** Standard 16-column header row used across multiple tests. */
+    /** Standard COL_COUNT-column header row used across multiple tests. */
     private function standardHeader(string $remarksLabel = 'REMARKS'): array
     {
         return [
