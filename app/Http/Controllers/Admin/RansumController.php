@@ -113,20 +113,47 @@ class RansumController extends Controller
     {
         $upload = RansumUpload::findOrFail($id);
 
-        // After import, show live DB records so edits are reflected immediately.
-        if ($upload->status === 'imported') {
-            $dbItems  = RansumItem::where('ransum_upload_id', $id)->orderBy('id')->get();
-            $grouped  = [];
+        // For both pending and imported: read from DB (seeding first if needed).
+        if (in_array($upload->status, ['pending', 'imported'])) {
+            // Seed draft items from Excel on first visit (only when no DB rows exist yet).
+            if ($upload->status === 'pending' && ! RansumItem::where('ransum_upload_id', $id)->exists()) {
+                $filePath = $this->uploadDir . '/' . $upload->stored_filename;
+
+                if (! file_exists($filePath)) {
+                    return redirect()->route('admin.ransum.index')
+                        ->with('error', __('File tidak ditemukan.'));
+                }
+
+                try {
+                    $importObj = new RansumImport();
+                    Excel::import($importObj, $filePath);
+                    $parser    = new RansumParser($importObj->getData());
+                    $flatItems = $parser->parseItemsFlat();
+                } catch (\Throwable $e) {
+                    return redirect()->route('admin.ransum.index')
+                        ->with('error', __('Gagal membaca file: ') . $e->getMessage());
+                }
+
+                DB::transaction(function () use ($upload, $flatItems) {
+                    foreach ($flatItems as $item) {
+                        RansumItem::create(array_merge(['ransum_upload_id' => $upload->id], $item));
+                    }
+                });
+            }
+
+            $dbItems = RansumItem::where('ransum_upload_id', $id)->orderBy('id')->get();
+            $grouped = [];
             foreach ($dbItems as $item) {
                 $sec = $item->section ?? 'UNKNOWN';
-                $grouped[$sec]['section']  = $sec;
-                $grouped[$sec]['items'][]  = $item->toArray();
+                $grouped[$sec]['section'] = $sec;
+                $grouped[$sec]['items'][] = $item->toArray();
             }
             $sections   = array_values($grouped);
             $isEditable = true;
             return view('admin.ransum.preview', compact('upload', 'sections', 'isEditable'));
         }
 
+        // Fallback for any unexpected status: parse from file, read-only.
         $filePath = $this->uploadDir . '/' . $upload->stored_filename;
 
         if (! file_exists($filePath)) {
@@ -135,9 +162,9 @@ class RansumController extends Controller
         }
 
         try {
-            $import = new RansumImport();
-            Excel::import($import, $filePath);
-            $parser   = new RansumParser($import->getData());
+            $importObj = new RansumImport();
+            Excel::import($importObj, $filePath);
+            $parser   = new RansumParser($importObj->getData());
             $sections = $parser->parseItems();
         } catch (\Throwable $e) {
             return redirect()->route('admin.ransum.index')
@@ -269,16 +296,16 @@ class RansumController extends Controller
     }
 
     // ------------------------------------------------------------------
-    // Item CRUD (only available after import)
+    // Item CRUD (available for pending and imported status)
     // ------------------------------------------------------------------
 
     public function storeItem(Request $request, int $id)
     {
         $upload = RansumUpload::findOrFail($id);
 
-        if ($upload->status !== 'imported') {
+        if (! in_array($upload->status, ['pending', 'imported'])) {
             return redirect()->route('admin.ransum.preview', $id)
-                ->with('error', __('Import data terlebih dahulu sebelum menambahkan item.'));
+                ->with('error', __('Tidak dapat menambahkan item pada status ini.'));
         }
 
         $validated = $request->validate($this->itemValidationRules());
@@ -287,6 +314,33 @@ class RansumController extends Controller
 
         return redirect()->route('admin.ransum.preview', $id)
             ->with('success', __('Item berhasil ditambahkan.'));
+    }
+
+    // ------------------------------------------------------------------
+    // Finalize – mark upload as imported (draft items already in DB)
+    // ------------------------------------------------------------------
+
+    public function finalize(int $id)
+    {
+        $upload = RansumUpload::findOrFail($id);
+
+        if ($upload->status !== 'pending') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Hanya upload dengan status pending yang dapat difinalisasi.'));
+        }
+
+        if (! RansumItem::where('ransum_upload_id', $id)->exists()) {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Tidak ada item draft. Silakan buka preview terlebih dahulu.'));
+        }
+
+        $upload->update([
+            'status'      => 'imported',
+            'imported_at' => now(),
+        ]);
+
+        return redirect()->route('admin.ransum.preview', $upload->id)
+            ->with('success', __('Data berhasil difinalisasi ke database.'));
     }
 
     public function updateItem(Request $request, int $id, int $itemId)
