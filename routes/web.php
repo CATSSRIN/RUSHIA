@@ -77,6 +77,8 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::post('ransum/{id}/items', [RansumController::class, 'storeItem'])->name('ransum.items.store');
     Route::patch('ransum/{id}/items/{itemId}', [RansumController::class, 'updateItem'])->name('ransum.items.update');
     Route::delete('ransum/{id}/items/{itemId}', [RansumController::class, 'destroyItem'])->name('ransum.items.destroy');
+    Route::get('ransum/{id}/invoice', [RansumController::class, 'invoicePreview'])->name('ransum.invoice');
+    Route::post('ransum/{id}/invoice/download', [RansumController::class, 'downloadInvoice'])->name('ransum.invoice.download');
 
     Route::resource('vendors', VendorController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);
