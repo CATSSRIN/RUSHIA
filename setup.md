@@ -94,6 +94,7 @@ touch database/database.sqlite
 
 ```bash
 php artisan migrate
+php artisan db:seed
 ```
 
 Perintah ini akan membuat semua tabel yang diperlukan, termasuk:
