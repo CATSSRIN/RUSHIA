@@ -7,6 +7,7 @@ use App\Imports\RansumImport;
 use App\Imports\RansumParser;
 use App\Models\RansumItem;
 use App\Models\RansumUpload;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -385,6 +386,55 @@ class RansumController extends Controller
             'status_received' => ['nullable', 'string', 'max:255'],
             'good_received'   => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    // ------------------------------------------------------------------
+    // Invoice Preview (web) & Download (PDF)
+    // ------------------------------------------------------------------
+
+    public function invoicePreview(int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Invoice hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = [];
+        foreach ($upload->items as $item) {
+            $sec = $item->section ?? 'UNKNOWN';
+            $grouped[$sec][] = $item;
+        }
+
+        return view('admin.ransum.invoice_preview', compact('upload', 'grouped'));
+    }
+
+    public function downloadInvoice(Request $request, int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Invoice hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = [];
+        foreach ($upload->items as $item) {
+            $sec = $item->section ?? 'UNKNOWN';
+            $grouped[$sec][] = $item;
+        }
+
+        $invoiceNumber = $request->input('invoice_number', 'INV-' . str_pad($upload->id, 6, '0', STR_PAD_LEFT));
+        $invoiceDate   = $request->input('invoice_date', now()->format('Y-m-d'));
+        $notes         = $request->input('notes', '');
+
+        $pdf = Pdf::loadView('admin.ransum.invoice_pdf', compact('upload', 'grouped', 'invoiceNumber', 'invoiceDate', 'notes'))
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'invoice-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     // ------------------------------------------------------------------
