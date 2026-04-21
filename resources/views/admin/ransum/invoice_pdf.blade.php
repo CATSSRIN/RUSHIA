@@ -6,7 +6,8 @@
     <style>
         @page { 
             size: A4 portrait;
-            margin: 40px 50px 100px 50px; }
+            margin: 40px 50px 100px 50px; 
+        }
         body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; line-height: 1.3; }
 
         .text-center { text-align: center; }
@@ -37,8 +38,6 @@
 
         .amount-wrap { width: 100%; border: none; margin: 0; padding: 0; }
         .amount-wrap td { border: none !important; padding: 0 !important; }
-
-        .says-box { background-color: #ffc107; padding: 6px 8px; font-weight: bold; margin-top: 0; border: 1px solid #000; border-top: none; }
 
         .payment-info { margin-top: 40px; float: left; width: 60%; }
         .signature { margin-top: 60px; float: right; width: 30%; text-align: center; }
@@ -169,12 +168,14 @@
                     </table>
                 </td>
             </tr>
+            {{-- Bagian Says dimasukkan langsung ke dalam tabel agar styling CSS terbaca PDF --}}
+            <tr>
+                <td colspan="3" style="background-color: #ffc107; padding: 6px 8px; border: 1px solid #000;">
+                    Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <i>{{ $teksTerbilang ?? '#ERROR!' }}</i>
+                </td>
+            </tr>
         </tbody>
     </table>
-
-    <div class="says-box">
-        Says * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->terbilang ?? '#ERROR!' }}
-    </div>
 
     {{-- Detail Pembayaran & TTD --}}
     <div>

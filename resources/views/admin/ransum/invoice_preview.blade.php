@@ -143,10 +143,9 @@
                     </tbody>
                 </table>
                 
-                <div class="bg-yellow-400 font-bold px-3 py-1.5 text-sm mb-12 border-l border-r border-b border-black">
-                    Says * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->terbilang ?? '#ERROR!' }}
-                </div>
-
+        <div   div class="bg-yellow-400 font-normal px-3 py-1.5 text-sm mb-12 border-l border-r border-b border-black">
+            Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <span class="italic">{{ $teksTerbilang ?? '#ERROR!' }}</span>
+        </div>
                 {{-- Payment & TTD --}}
                 <div class="flex justify-between text-sm">
                     <div>

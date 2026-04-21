@@ -406,8 +406,12 @@ class RansumController extends Controller
             $sec = $item->section ?? 'UNKNOWN';
             $grouped[$sec][] = $item;
         }
+        // Ambil total dari database
+         $total = $upload->total_belanja_ransum;
 
-        return view('admin.ransum.invoice_preview', compact('upload', 'grouped'));
+         // Ubah ke format huruf
+         $teksTerbilang = $this->terbilang($total);
+        return view('admin.ransum.invoice_preview', compact('upload', 'grouped', 'teksTerbilang'));
     }
 
     public function downloadInvoice(Request $request, int $id)
@@ -425,17 +429,53 @@ class RansumController extends Controller
             $grouped[$sec][] = $item;
         }
 
+        $teksTerbilang = $this->terbilang($upload->total_belanja_ransum);
         $invoiceNumber = $request->input('invoice_number', 'INV-' . str_pad($upload->id, 6, '0', STR_PAD_LEFT));
         $invoiceDate   = $request->input('invoice_date', now()->format('Y-m-d'));
         $notes         = $request->input('notes', '');
 
-        $pdf = Pdf::loadView('admin.ransum.invoice_pdf', compact('upload', 'grouped', 'invoiceNumber', 'invoiceDate', 'notes'))
-            ->setPaper('a4', 'landscape');
+        $pdf = Pdf::loadView('admin.ransum.invoice_pdf', compact('upload', 'grouped', 'invoiceNumber', 'invoiceDate', 'notes', 'teksTerbilang'))
+            ->setPaper('a4', 'potrait');
 
         $filename = 'invoice-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
 
         return $pdf->download($filename);
     }
+
+    private function penyebut($nilai) {
+    $nilai = abs($nilai);
+    $huruf = array("", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas");
+    $temp = "";
+    if ($nilai < 12) {
+        $temp = " ". $huruf[$nilai];
+    } else if ($nilai < 20) {
+        $temp = $this->penyebut($nilai - 10). " Belas";
+    } else if ($nilai < 100) {
+        $temp = $this->penyebut($nilai/10)." Puluh". $this->penyebut($nilai % 10);
+    } else if ($nilai < 200) {
+        $temp = " Seratus" . $this->penyebut($nilai - 100);
+    } else if ($nilai < 1000) {
+        $temp = $this->penyebut($nilai/100) . " Ratus" . $this->penyebut($nilai % 100);
+    } else if ($nilai < 2000) {
+        $temp = " Seribu" . $this->penyebut($nilai - 1000);
+    } else if ($nilai < 1000000) {
+        $temp = $this->penyebut($nilai/1000) . " Ribu" . $this->penyebut($nilai % 1000);
+    } else if ($nilai < 1000000000) {
+        $temp = $this->penyebut($nilai/1000000) . " Juta" . $this->penyebut($nilai % 1000000);
+    } else if ($nilai < 1000000000000) {
+        $temp = $this->penyebut($nilai/1000000000) . " Milyar" . $this->penyebut(fmod($nilai,1000000000));
+    }
+    return $temp;
+}
+
+public function terbilang($nilai) {
+    if($nilai < 0) {
+        $hasil = "Minus ". trim($this->penyebut($nilai));
+    } else {
+        $hasil = trim($this->penyebut($nilai));
+    }
+    return $hasil . " Rupiah";
+}
 
     // ------------------------------------------------------------------
 
