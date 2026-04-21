@@ -4,277 +4,193 @@
     <meta charset="utf-8">
     <title>Invoice {{ $invoiceNumber }}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1f2937; padding: 24px 28px; }
+        @page { 
+            size: A4 portrait;
+            margin: 40px 50px 100px 50px; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; line-height: 1.3; }
 
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
-        .company { font-size: 18px; font-weight: bold; color: #4f46e5; }
-        .company-sub { font-size: 9px; color: #6b7280; margin-top: 2px; }
-        .inv-title { font-size: 24px; font-weight: bold; color: #9ca3af; text-align: right; letter-spacing: 2px; }
-        .inv-meta { text-align: right; color: #6b7280; font-size: 9px; margin-top: 2px; }
-        .inv-num { font-size: 11px; font-weight: bold; color: #374151; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .text-blue { color: #1e3a8b; }
 
-        .divider { border: none; border-top: 1.5px solid #e5e7eb; margin: 14px 0; }
+        .header-title { font-size: 22px; font-weight: bold; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .header-addr { font-size: 9px; margin-bottom: 10px; }
+        .line-blue { border-top: 2px solid #1e3a8b; margin: 0 0 15px 0; }
 
-        /* Info grid */
-        .info-row { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 14px; }
-        .info-cell { width: 25%; padding-right: 10px; margin-bottom: 6px; }
-        .info-label { font-size: 7px; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.05em; margin-bottom: 2px; font-weight: bold; }
-        .info-value { font-size: 10px; font-weight: 600; color: #1f2937; }
-        .info-sub { font-size: 8px; color: #6b7280; }
+        .inv-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 25px; letter-spacing: 1px; }
 
-        /* Section header */
-        .section-header { background: #eef2ff; padding: 5px 10px; font-size: 9px; font-weight: bold; color: #3730a3; border-radius: 3px 3px 0 0; border: 1px solid #c7d2fe; margin-top: 10px; }
+        .meta-table { width: 100%; margin-bottom: 25px; }
+        .meta-table td { vertical-align: top; }
 
-        /* Items table */
-        table { width: 100%; border-collapse: collapse; font-size: 8px; }
-        thead th {
-            background: #f9fafb;
-            padding: 5px 6px;
-            text-align: left;
-            font-size: 7px;
-            text-transform: uppercase;
-            color: #6b7280;
-            border-bottom: 1px solid #e5e7eb;
-            border-top: 1px solid #e5e7eb;
-            white-space: nowrap;
-        }
-        thead th.right { text-align: right; }
-        tbody td { padding: 4px 6px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
-        tbody td.right { text-align: right; }
-        tbody tr:nth-child(even) td { background: #fafafa; }
+        .bg-yellow { background-color: #ffc107; font-weight: bold; padding: 2px 4px; }
 
-        /* Totals */
-        .totals-wrap { display: flex; justify-content: flex-end; margin-top: 12px; margin-bottom: 12px; }
-        .totals-table { width: 260px; font-size: 9px; }
-        .totals-table td { padding: 3px 6px; }
-        .totals-table td.label { color: #6b7280; text-align: right; }
-        .totals-table td.value { text-align: right; color: #374151; font-weight: 600; }
-        .total-main td { border-top: 1.5px solid #d1d5db; font-size: 11px; font-weight: bold; }
-        .total-main td.label { color: #374151; }
-        .total-main td.value { color: #4f46e5; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+        .items-table th, .items-table td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+        .items-table th { font-weight: bold; text-align: left; }
+        .items-table th:nth-child(1) { text-align: center; width: 5%; }
+        .items-table th:nth-child(3) { text-align: center; width: 25%; }
 
-        /* Notes */
-        .notes-box { padding: 8px 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 8px; color: #374151; margin-bottom: 14px; }
-        .notes-box strong { font-size: 7px; text-transform: uppercase; color: #9ca3af; display: block; margin-bottom: 2px; }
+        /* Menghilangkan border dalam agar terlihat menyatu */
+        .border-none-bottom { border-bottom: none !important; }
+        .border-none-top { border-top: none !important; }
 
-        /* Signatures */
-        .signatures { display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
-        .sig-grid { display: flex; gap: 48px; }
-        .sig-block { text-align: center; width: 110px; }
-        .sig-label { font-size: 8px; font-weight: bold; color: #374151; margin-bottom: 4px; }
-        .sig-image { width: 90px; height: 60px; object-fit: contain; border: 1px solid #e5e7eb; display: block; margin: 0 auto 4px; }
-        .sig-placeholder { width: 90px; height: 60px; border-bottom: 1px solid #9ca3af; display: block; margin: 0 auto 4px; }
-        .sig-name { font-size: 8px; color: #374151; font-weight: 600; border-top: 1px solid #9ca3af; padding-top: 3px; }
+        .amount-wrap { width: 100%; border: none; margin: 0; padding: 0; }
+        .amount-wrap td { border: none !important; padding: 0 !important; }
 
-        /* Footer */
-        .footer { margin-top: 18px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 7px; color: #9ca3af; }
+        .says-box { background-color: #ffc107; padding: 6px 8px; font-weight: bold; margin-top: 0; border: 1px solid #000; border-top: none; }
+
+        .payment-info { margin-top: 40px; float: left; width: 60%; }
+        .signature { margin-top: 60px; float: right; width: 30%; text-align: center; }
+
+        .footer { position: fixed; bottom: -60px; left: 0; right: 0; font-size: 9px; }
+        .footer-line { border-top: 2px solid #1e3a8b; margin-bottom: 8px; }
+        .footer-table td { vertical-align: top; padding-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    {{-- Header --}}
-    <div class="header">
-        <div>
-            <div class="company">{{ $upload->vendor_name ?? 'Ship Order' }}</div>
-            <div class="company-sub">{{ __('Bukti Permintaan Barang (BPB) Ransum') }}</div>
-        </div>
-        <div>
-            <div class="inv-title">INVOICE</div>
-            <div class="inv-meta inv-num">{{ $invoiceNumber }}</div>
-            <div class="inv-meta">{{ \Carbon\Carbon::parse($invoiceDate)->format('d F Y') }}</div>
-        </div>
-    </div>
-
-    <hr class="divider">
-
-    {{-- Info Grid --}}
-    <div class="info-row">
-        @if($upload->vessel_name)
-        <div class="info-cell">
-            <div class="info-label">{{ __('Nama Kapal') }}</div>
-            <div class="info-value">{{ $upload->vessel_name }}</div>
-            @if($upload->vessel_code)<div class="info-sub">{{ $upload->vessel_code }}</div>@endif
-        </div>
-        @endif
-        @if($upload->voyage)
-        <div class="info-cell">
-            <div class="info-label">{{ __('Voyage') }}</div>
-            <div class="info-value">{{ $upload->voyage }}</div>
-        </div>
-        @endif
-        @if($upload->date_start || $upload->date_end)
-        <div class="info-cell">
-            <div class="info-label">{{ __('Periode') }}</div>
-            <div class="info-value">{{ $upload->date_start ?? '' }}{{ ($upload->date_start && $upload->date_end) ? ' – ' : '' }}{{ $upload->date_end ?? '' }}</div>
-        </div>
-        @endif
-        @if($upload->port_tujuan)
-        <div class="info-cell">
-            <div class="info-label">{{ __('Port Tujuan') }}</div>
-            <div class="info-value">{{ $upload->port_tujuan }}</div>
-        </div>
-        @endif
-        @if($upload->jumlah_crew)
-        <div class="info-cell">
-            <div class="info-label">{{ __('Jumlah Crew') }}</div>
-            <div class="info-value">{{ $upload->jumlah_crew }}</div>
-        </div>
-        @endif
-        @if($upload->jumlah_hari_pensupplaian)
-        <div class="info-cell">
-            <div class="info-label">{{ __('Hari Pensupplaian') }}</div>
-            <div class="info-value">{{ $upload->jumlah_hari_pensupplaian }}</div>
-        </div>
-        @endif
-        @if($upload->contact_person)
-        <div class="info-cell">
-            <div class="info-label">{{ __('Contact Person') }}</div>
-            <div class="info-value">{{ $upload->contact_person }}</div>
-        </div>
-        @endif
-        @if($upload->eta)
-        <div class="info-cell">
-            <div class="info-label">{{ __('ETA') }}</div>
-            <div class="info-value">{{ $upload->eta }}</div>
-        </div>
-        @endif
-    </div>
-
-    {{-- Items per Section --}}
-    @foreach($grouped as $section => $items)
-        <div class="section-header">{{ $section }}</div>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width:20px">#</th>
-                    <th>{{ __('Nama Ransum') }}</th>
-                    <th>{{ __('Items / Merk') }}</th>
-                    <th>{{ __('Supplier') }}</th>
-                    <th class="right">{{ __('Qty') }}</th>
-                    <th>{{ __('Satuan') }}</th>
-                    <th class="right">{{ __('Non BKP') }}</th>
-                    <th class="right">{{ __('BKP') }}</th>
-                    <th class="right">{{ __('PPN 11%') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($items as $i => $item)
-                <tr>
-                    <td>{{ $i + 1 }}</td>
-                    <td style="font-weight:600">{{ $item->nama_ransum ?? '-' }}</td>
-                    <td style="color:#6b7280">
-                        {{ $item->items ?? '' }}{{ ($item->items && $item->merk_spec) ? ' / ' : '' }}{{ $item->merk_spec ?? '' }}
-                        @if(!$item->items && !$item->merk_spec) - @endif
-                    </td>
-                    <td>{{ $item->supplier ?? '-' }}</td>
-                    <td class="right">{{ $item->qty !== null ? number_format($item->qty, 0, ',', '.') : '-' }}</td>
-                    <td>{{ $item->satuan ?? '-' }}</td>
-                    <td class="right">{{ $item->harga !== null ? number_format($item->harga, 0, ',', '.') : '-' }}</td>
-                    <td class="right">{{ $item->bkp !== null ? number_format($item->bkp, 0, ',', '.') : '-' }}</td>
-                    <td class="right">{{ $item->ppn_11 !== null ? number_format($item->ppn_11, 0, ',', '.') : '-' }}</td>
-                </tr>
-                @endforeach
-            </tbody>
+    {{-- Footer Bawah --}}
+    <div class="footer">
+        <div class="footer-line"></div>
+        <table class="footer-table" width="100%">
+            <tr>
+                <td width="15%">Branch Jakarta</td>
+                <td width="2%">:</td>
+                <td width="83%">Pergudangan INKOPAU, Jl. R. E Martadinata No. 100 Blok. B03, Kel. Tanjung Priok<br>Kec. Tanjung Priok, Jakarta Utara, Jakarta 14310</td>
+            </tr>
+            <tr>
+                <td>Phone</td>
+                <td>:</td>
+                <td>+62 31-3292288</td>
+            </tr>
+            <tr>
+                <td>Email</td>
+                <td>:</td>
+                <td><a href="mailto:andalanmaritimsejahtera@gmail.com" style="color: #1e3a8b; text-decoration: none;">andalanmaritimsejahtera@gmail.com</a></td>
+            </tr>
         </table>
-    @endforeach
+    </div>
 
-    {{-- Totals --}}
-    <div class="totals-wrap">
-        <table class="totals-table">
-            @if($upload->barang_non_bkp)
+    {{-- Header --}}
+    <div class="text-center">
+        <div class="header-title text-blue">PT Andalan Maritim Sejahtera</div>
+        <div class="header-addr">Aloon - Aloon Priok Nomor 27, Perak Barat, Krembangan, Kota Surabaya, Jawa Timur 60177</div>
+    </div>
+    <div class="line-blue"></div>
+
+    <div class="inv-title">INVOICE</div>
+
+    {{-- Info Perusahaan & Klien --}}
+    <table class="meta-table">
+        <tr>
+            <td width="55%">
+                <div class="bold" style="margin-bottom: 3px;">Andalan Maritim Sejahtera, PT</div>
+                <div>Aloon-Aloon Priok No. 27</div>
+                <div>Perak Barat, Krembangan</div>
+                <div>Kota Surabaya, Provinsi Jawa Timur 60177</div>
+
+                <div style="margin-top: 15px;">Bill To:</div>
+                <div class="bold" style="margin-bottom: 3px;">PT. MERATUS LINE</div>
+                <div style="font-size: 10px; line-height: 1.4;">JL ALOON-ALOON PRIOK NO.27 RT 006 RW 008, PERAK<br>BARAT, KREMBANGAN , KOTA SURABAYA, JAWA TIMUR</div>
+            </td>
+            <td width="45%">
+                <table width="100%">
+                    <tr>
+                        <td class="text-right" width="45%">Invoice Number :</td>
+                        <td width="55%"><span class="bg-yellow">{{ $invoiceNumber }}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">Invoice Date :</td>
+                        <td>{{ \Carbon\Carbon::parse($invoiceDate)->format('d F Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">Tanggal Pemesanan :</td>
+                        <td>{{ $upload->tanggal_pemesanan ?? \Carbon\Carbon::parse($invoiceDate)->subDays(4)->format('d F Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">Tanggal Pengiriman :</td>
+                        <td>{{ $upload->tanggal_pengiriman ?? \Carbon\Carbon::parse($invoiceDate)->format('d F Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right">No. Surat Jalan/DO :</td>
+                        <td>{{ $upload->no_do ?? '009/DO-AMS-LBJ/III/2026' }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    {{-- Tabel Utama (Data Kapal Saja) --}}
+    <table class="items-table">
+        <thead>
             <tr>
-                <td class="label">{{ __('Barang Non BKP') }}</td>
-                <td class="value">Rp {{ number_format($upload->barang_non_bkp, 0, ',', '.') }}</td>
+                <th>No</th>
+                <th class="text-center">DESCRIPTION</th>
+                <th>AMOUNT (IDR)</th>
             </tr>
-            @endif
-            @if($upload->barang_bkp)
+        </thead>
+        <tbody>
             <tr>
-                <td class="label">{{ __('Barang BKP') }}</td>
-                <td class="value">Rp {{ number_format($upload->barang_bkp, 0, ',', '.') }}</td>
-            </tr>
-            @endif
-            @if($upload->pajak_11)
-            <tr>
-                <td class="label">{{ __('Pajak 11%') }}</td>
-                <td class="value">Rp {{ number_format($upload->pajak_11, 0, ',', '.') }}</td>
-            </tr>
-            @endif
-            @if($upload->total_belanja_ransum)
-            <tr class="total-main">
-                <td class="label">{{ __('Total Belanja Ransum') }}</td>
-                <td class="value">Rp {{ number_format($upload->total_belanja_ransum, 0, ',', '.') }}</td>
-            </tr>
-            @endif
-            @if($upload->budget)
-            <tr>
-                <td class="label">{{ __('Budget') }}</td>
-                <td class="value">Rp {{ number_format($upload->budget, 0, ',', '.') }}</td>
-            </tr>
-            @endif
-            @if($upload->selisih_anggaran !== null && $upload->selisih_anggaran != 0)
-            <tr>
-                <td class="label">{{ __('Selisih Anggaran') }}</td>
-                <td class="value" style="color: {{ $upload->selisih_anggaran < 0 ? '#dc2626' : '#16a34a' }}">
-                    Rp {{ number_format($upload->selisih_anggaran, 0, ',', '.') }}
+                <td class="text-center border-none-bottom">1</td>
+                <td class="border-none-bottom">Pembelian Ransum Vessel &nbsp;{{ strtoupper($upload->vessel_name) }}</td>
+                <td class="border-none-bottom">
+                    <table class="amount-wrap">
+                        <tr>
+                            <td width="15%">Rp</td>
+                            <td width="85%" class="text-right">{{ number_format($upload->total_belanja_ransum, 0, '.', ',') }}</td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
-            @endif
-        </table>
+            <tr>
+                <td class="text-center border-none-bottom border-none-top">2</td>
+                <td class="border-none-bottom border-none-top">No. PO * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->po_number ?? '000' }}</td>
+                <td class="border-none-bottom border-none-top"></td>
+            </tr>
+            <tr>
+                <td class="text-center border-none-bottom border-none-top">3</td>
+                <td class="border-none-bottom border-none-top">Voy * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->voyage ?? '-' }}</td>
+                <td class="border-none-bottom border-none-top"></td>
+            </tr>
+            <tr>
+                <td class="text-center border-none-top" style="height: 120px;">4</td>
+                <td class="border-none-top">Port * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->port_tujuan ?? '-' }}</td>
+                <td class="border-none-top"></td>
+            </tr>
+            <tr>
+                <td colspan="2" class="text-right bold">TOTAL :</td>
+                <td class="bold">
+                    <table class="amount-wrap">
+                        <tr>
+                            <td width="15%">Rp</td>
+                            <td width="85%" class="text-right">{{ number_format($upload->total_belanja_ransum, 0, '.', ',') }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="says-box">
+        Says * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->terbilang ?? '#ERROR!' }}
     </div>
 
-    {{-- Notes --}}
-    @if($notes)
-    <div class="notes-box">
-        <strong>{{ __('Catatan:') }}</strong>
-        {{ $notes }}
-    </div>
-    @endif
-
-    {{-- Signatures --}}
-    <div class="signatures">
-        <div class="sig-grid">
-            <div class="sig-block">
-                <div class="sig-label">{{ __('Pemohon') }}</div>
-                @if($upload->pemohon_photo)
-                    @php
-                        $uploadDir = storage_path('app/private/ransum_uploads');
-                        $photoPath = $uploadDir . '/' . $upload->pemohon_photo;
-                    @endphp
-                    @if(file_exists($photoPath))
-                        <img src="{{ $photoPath }}" class="sig-image" alt="TTD Pemohon">
-                    @else
-                        <span class="sig-placeholder"></span>
-                    @endif
-                @else
-                    <span class="sig-placeholder"></span>
-                @endif
-                <div class="sig-name">{{ $upload->pemohon ?? '____________________' }}</div>
-            </div>
-            <div class="sig-block">
-                <div class="sig-label">{{ __('Menyetujui') }}</div>
-                @if($upload->menyetujui_photo)
-                    @php
-                        $uploadDir = storage_path('app/private/ransum_uploads');
-                        $photoPath = $uploadDir . '/' . $upload->menyetujui_photo;
-                    @endphp
-                    @if(file_exists($photoPath))
-                        <img src="{{ $photoPath }}" class="sig-image" alt="TTD Menyetujui">
-                    @else
-                        <span class="sig-placeholder"></span>
-                    @endif
-                @else
-                    <span class="sig-placeholder"></span>
-                @endif
-                <div class="sig-name">{{ $upload->menyetujui ?? '____________________' }}</div>
-            </div>
+    {{-- Detail Pembayaran & TTD --}}
+    <div>
+        <div class="payment-info">
+            Paid to * :<br>
+            ANDALAN MARITIM SEJAHTERA, PT<br>
+            Bank Mandiri<br>
+            KCP Surabaya Tanjung Perak<br>
+            A/C No * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR
         </div>
-    </div>
-
-    {{-- Footer --}}
-    <div class="footer">
-        <p>{{ __('Dokumen ini dihasilkan secara otomatis oleh Sistem Manajemen BPB Ransum') }} &bull; {{ __('Dicetak pada') }} {{ now()->format('d F Y H:i') }}</p>
+        
+        <div class="signature">
+            <br><br><br><br><br>
+            <span style="text-decoration: underline;">Irwinsyah</span>
+        </div>
+        <div style="clear: both;"></div>
     </div>
 
 </body>
