@@ -98,7 +98,11 @@
                     <tr>
                         <td class="text-right" width="45%">Invoice Number :</td>
                         {{-- Hapus background kuning, ubah format jadi INV-AMS --}}
-                        <td width="55%"><span class="bg-yellow">{{ $invoiceNumber }}</span></td>
+                        <td width="55%">
+                            <div style="background-color: #ffc107; font-weight: bold; padding: 4px 8px; display: inline-block;">
+                                {{ $invoiceNumber }}
+                            </div>
+                        </td>
                     </tr>
                     <tr>
                         <td class="text-right">Invoice Date :</td>
