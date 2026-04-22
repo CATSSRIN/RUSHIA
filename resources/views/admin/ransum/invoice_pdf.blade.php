@@ -24,8 +24,6 @@
         .meta-table { width: 100%; margin-bottom: 25px; }
         .meta-table td { vertical-align: top; }
 
-        .bg-yellow { background-color: #ffc107; font-weight: bold; padding: 2px 4px; }
-
         .items-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
         .items-table th, .items-table td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
         .items-table th { font-weight: bold; text-align: left; }
@@ -39,8 +37,10 @@
         .amount-wrap { width: 100%; border: none; margin: 0; padding: 0; }
         .amount-wrap td { border: none !important; padding: 0 !important; }
 
-        .payment-info { margin-top: 40px; float: left; width: 60%; }
-        .signature { margin-top: 60px; float: right; width: 30%; text-align: center; }
+        .payment-info { margin-top: 40px; float: left; width: 50%; }
+        
+        /* Modifikasi Posisi TTD: margin-top ditambah agar turun, margin-right ditambah agar geser kiri */
+        .signature { margin-top: 90px; float: right; width: 30%; text-align: center; margin-right: 15%; }
 
         .footer { position: fixed; bottom: -60px; left: 0; right: 0; font-size: 9px; }
         .footer-line { border-top: 2px solid #1e3a8b; margin-bottom: 8px; }
@@ -97,6 +97,7 @@
                 <table width="100%">
                     <tr>
                         <td class="text-right" width="45%">Invoice Number :</td>
+                        {{-- Hapus background kuning, ubah format jadi INV-AMS --}}
                         <td width="55%"><span class="bg-yellow">{{ $invoiceNumber }}</span></td>
                     </tr>
                     <tr>
@@ -168,9 +169,9 @@
                     </table>
                 </td>
             </tr>
-            {{-- Bagian Says dimasukkan langsung ke dalam tabel agar styling CSS terbaca PDF --}}
+            {{-- Hapus style background-color kuning di baris ini --}}
             <tr>
-                <td colspan="3" style="background-color: #ffc107; padding: 6px 8px; border: 1px solid #000;">
+                <td colspan="3" style="padding: 6px 8px; border: 1px solid #000;">
                     Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <i>{{ $teksTerbilang ?? '#ERROR!' }}</i>
                 </td>
             </tr>
@@ -187,6 +188,7 @@
             A/C No * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR
         </div>
         
+        {{-- TTD sudah diatur posisi css-nya di atas agar lebih turun dan ke kiri --}}
         <div class="signature">
             <br><br><br><br><br>
             <span style="text-decoration: underline;">Irwinsyah</span>

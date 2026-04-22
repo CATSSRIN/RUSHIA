@@ -17,15 +17,15 @@
     <div class="py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            {{-- Form Konfigurasi (Tetap sama) --}}
             <form method="POST" action="{{ route('admin.ransum.invoice.download', $upload->id) }}" id="invoice-form">
                 @csrf
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">{{ __('Nomor Invoice') }}</label>
+                            {{-- Format default nomor invoice diganti jadi INV-AMS-00000 --}}
                             <input type="text" name="invoice_number" id="invoice_number"
-                                   value="INV-{{ str_pad($upload->id, 6, '0', STR_PAD_LEFT) }}"
+                                   value="INV-AMS-{{ str_pad($upload->id, 5, '0', STR_PAD_LEFT) }}"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
                                    oninput="document.getElementById('preview-inv-number').textContent = this.value">
                         </div>
@@ -46,7 +46,6 @@
                 </div>
             </form>
 
-            {{-- Kartu Preview Invoice Ala Gambar --}}
             <div class="bg-white shadow-sm border border-gray-200 p-10 print:shadow-none print:border-none" style="font-family: Arial, sans-serif; color: #000;">
                 
                 {{-- Header --}}
@@ -74,7 +73,7 @@
                         <table class="w-full text-sm">
                             <tr>
                                 <td class="text-right py-1 pr-4">Invoice Number :</td>
-                                <td class="font-bold bg-yellow-400 px-2" id="preview-inv-number">INV-{{ str_pad($upload->id, 6, '0', STR_PAD_LEFT) }}</td>
+                                <td class="font-bold px-2 bg-yellow-400" id="preview-inv-number">INV-AMS-{{ str_pad($upload->id, 5, '0', STR_PAD_LEFT) }}</td>
                             </tr>
                             <tr>
                                 <td class="text-right py-1 pr-4">Invoice Date :</td>
@@ -143,9 +142,11 @@
                     </tbody>
                 </table>
                 
-        <div   div class="bg-yellow-400 font-normal px-3 py-1.5 text-sm mb-12 border-l border-r border-b border-black">
-            Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <span class="italic">{{ $teksTerbilang ?? '#ERROR!' }}</span>
-        </div>
+                {{-- Background kuning (bg-yellow-400) dihapus --}}
+                <div class="font-normal px-3 py-1.5 text-sm mb-12 border-l border-r border-b border-black">
+                    Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <span class="italic">{{ $teksTerbilang ?? '#ERROR!' }}</span>
+                </div>
+
                 {{-- Payment & TTD --}}
                 <div class="flex justify-between text-sm">
                     <div>
@@ -155,7 +156,9 @@
                         <div>KCP Surabaya Tanjung Perak</div>
                         <div>A/C No * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR</div>
                     </div>
-                    <div class="text-center pt-16 w-48">
+                    
+                    {{-- pt-24 (padding top) ditambah agar turun, pr-20 (padding right) ditambah agar geser kiri --}}
+                    <div class="text-center pt-24 pr-20 w-64">
                         <div class="border-b border-black inline-block px-4 pb-1">Irwinsyah</div>
                     </div>
                 </div>
