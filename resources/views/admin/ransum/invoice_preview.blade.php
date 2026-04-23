@@ -23,7 +23,6 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">{{ __('Nomor Invoice') }}</label>
-                            {{-- Format default nomor invoice diganti jadi INV-AMS-00000 --}}
                             <input type="text" name="invoice_number" id="invoice_number"
                                    value="INV-AMS-{{ str_pad($upload->id, 5, '0', STR_PAD_LEFT) }}"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
@@ -73,7 +72,8 @@
                         <table class="w-full text-sm">
                             <tr>
                                 <td class="text-right py-1 pr-4">Invoice Number :</td>
-                                <td class="font-bold px-2 bg-yellow-400" id="preview-inv-number">INV-AMS-{{ str_pad($upload->id, 5, '0', STR_PAD_LEFT) }}</td>
+                                {{-- Background yellow dihapus disini --}}
+                                <td class="font-bold px-2" id="preview-inv-number">INV-AMS-{{ str_pad($upload->id, 5, '0', STR_PAD_LEFT) }}</td>
                             </tr>
                             <tr>
                                 <td class="text-right py-1 pr-4">Invoice Date :</td>
@@ -142,7 +142,6 @@
                     </tbody>
                 </table>
                 
-                {{-- Background kuning (bg-yellow-400) dihapus --}}
                 <div class="font-normal px-3 py-1.5 text-sm mb-12 border-l border-r border-b border-black">
                     Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <span class="italic">{{ $teksTerbilang ?? '#ERROR!' }}</span>
                 </div>
@@ -157,8 +156,8 @@
                         <div>A/C No * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR</div>
                     </div>
                     
-                    {{-- pt-24 (padding top) ditambah agar turun, pr-20 (padding right) ditambah agar geser kiri --}}
-                    <div class="text-center pt-24 pr-20 w-64">
+                    {{-- pt-40 (padding top) dirubah dari 24 ke 40 agar namanya turun jauh ke bawah --}}
+                    <div class="text-center pt-40 pr-20 w-64">
                         <div class="border-b border-black inline-block px-4 pb-1">Irwinsyah</div>
                     </div>
                 </div>

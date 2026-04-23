@@ -39,8 +39,8 @@
 
         .payment-info { margin-top: 40px; float: left; width: 50%; }
         
-        /* Modifikasi Posisi TTD: margin-top ditambah agar turun, margin-right ditambah agar geser kiri */
-        .signature { margin-top: 90px; float: right; width: 30%; text-align: center; margin-right: 15%; }
+        /* Modifikasi Posisi TTD: margin-top saya tambah ke 140px agar jauh lebih ke bawah */
+        .signature { margin-top: 140px; float: right; width: 30%; text-align: center; margin-right: 15%; }
 
         .footer { position: fixed; bottom: -60px; left: 0; right: 0; font-size: 9px; }
         .footer-line { border-top: 2px solid #1e3a8b; margin-bottom: 8px; }
@@ -97,9 +97,9 @@
                 <table width="100%">
                     <tr>
                         <td class="text-right" width="45%">Invoice Number :</td>
-                        {{-- Hapus background kuning, ubah format jadi INV-AMS --}}
                         <td width="55%">
-                            <div style="background-color: #ffc107; font-weight: bold; padding: 4px 8px; display: inline-block;">
+                            {{-- Warna background dihapus, murni text bold saja --}}
+                            <div style="font-weight: bold;">
                                 {{ $invoiceNumber }}
                             </div>
                         </td>
@@ -174,7 +174,6 @@
                     </table>
                 </td>
             </tr>
-            {{-- Hapus style background-color kuning di baris ini --}}
             <tr>
                 <td colspan="3" style="padding: 6px 8px; border: 1px solid #000;">
                     Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <i>{{ $teksTerbilang ?? '#ERROR!' }}</i>
@@ -193,7 +192,6 @@
             A/C No * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR
         </div>
         
-        {{-- TTD sudah diatur posisi css-nya di atas agar lebih turun dan ke kiri --}}
         <div class="signature">
             <br><br><br><br><br>
             <span style="text-decoration: underline;">Irwinsyah</span>
