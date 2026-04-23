@@ -104,6 +104,7 @@
                             </div>
                         </td>
                     </tr>
+                    
                     <tr>
                         <td class="text-right">Invoice Date :</td>
                         <td>{{ \Carbon\Carbon::parse($invoiceDate)->format('d F Y') }}</td>
