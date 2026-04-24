@@ -64,6 +64,10 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::get('export/render/{filename}', [ExportController::class, 'renderHtml'])->name('export.render');
     Route::get('export/download/{filename}', [ExportController::class, 'download'])->name('export.download');
     Route::delete('export/{filename}', [ExportController::class, 'destroy'])->name('export.destroy');
+    
+    // Rute untuk DO
+    Route::get('/admin/ransum/{id}/do/preview', [RansumController::class, 'previewDO'])->name('admin.ransum.do.preview');
+    Route::post('/admin/ransum/{id}/do/download', [RansumController::class, 'downloadDO'])->name('admin.ransum.do.download');
 
     // Ransum BPB Import
     Route::get('ransum', [RansumController::class, 'index'])->name('ransum.index');
