@@ -17,6 +17,16 @@
     <div class="py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
+                    {{-- Warning: DO belum dibuat --}}
+        @if(session('warning'))
+            <div class="mb-4 p-4 bg-yellow-50 border border-yellow-400 rounded-lg flex items-start gap-3">
+                <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <p class="text-sm text-yellow-800 font-medium">{{ session('warning') }}</p>
+            </div>
+        @endif
+
             <form method="POST" action="{{ route('admin.ransum.invoice.download', $upload->id) }}" id="invoice-form">
                 @csrf
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
@@ -36,12 +46,25 @@
                                    oninput="updateInvoiceDate(this.value)">
                         </div>
                     </div>
-                    <div class="mt-4 flex justify-end">
+<div class="mt-4 flex justify-end gap-3">
+                    {{-- Tombol download: conditional berdasarkan status DO --}}
+                    @if(!empty($upload->no_do))
+                        {{-- DO sudah ada: tombol aktif --}}
                         <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             {{ __('Download PDF') }}
                         </button>
-                    </div>
+                    @else
+                        {{-- DO belum ada: tombol disabled + link ke DO --}}
+                        <a href="{{ route('admin.ransum.do.preview', $upload->id) }}" class="inline-flex items-center gap-2 px-6 py-2.5 bg-yellow-500 text-white text-sm font-semibold rounded-lg hover:bg-yellow-600 transition">
+                            {{ __('Buat DO Terlebih Dahulu') }}
+                        </a>
+                        <button type="button" disabled class="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-400 text-white text-sm font-semibold rounded-lg cursor-not-allowed opacity-60" title="{{ __('Anda harus membuat DO terlebih dahulu sebelum mendownload invoice') }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            {{ __('Download PDF') }}
+                        </button>
+                    @endif
+                </div>
                 </div>
             </form>
 
