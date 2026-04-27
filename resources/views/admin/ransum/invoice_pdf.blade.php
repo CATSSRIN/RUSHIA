@@ -150,17 +150,17 @@
             </tr>
             <tr>
                 <td class="text-center border-none-bottom border-none-top">2</td>
-                <td class="border-none-bottom border-none-top">No. PO * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->po_number ?? '000' }}</td>
+                <td class="border-none-bottom border-none-top">No. PO  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->po_number ?? '000' }}</td>
                 <td class="border-none-bottom border-none-top"></td>
             </tr>
             <tr>
                 <td class="text-center border-none-bottom border-none-top">3</td>
-                <td class="border-none-bottom border-none-top">Voy * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->voyage ?? '-' }}</td>
+                <td class="border-none-bottom border-none-top">Voy  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->voyage ?? '-' }}</td>
                 <td class="border-none-bottom border-none-top"></td>
             </tr>
             <tr>
                 <td class="text-center border-none-top" style="height: 120px;">4</td>
-                <td class="border-none-top">Port * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->port_tujuan ?? '-' }}</td>
+                <td class="border-none-top">Port  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->port_tujuan ?? '-' }}</td>
                 <td class="border-none-top"></td>
             </tr>
             <tr>
@@ -185,11 +185,11 @@
     {{-- Detail Pembayaran & TTD --}}
     <div>
         <div class="payment-info">
-            Paid to * :<br>
+            Paid to  :<br>
             ANDALAN MARITIM SEJAHTERA, PT<br>
             Bank Mandiri<br>
             KCP Surabaya Tanjung Perak<br>
-            A/C No * : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR
+            A/C No  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR
         </div>
         
         <div class="signature">
