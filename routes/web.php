@@ -64,10 +64,6 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::get('export/render/{filename}', [ExportController::class, 'renderHtml'])->name('export.render');
     Route::get('export/download/{filename}', [ExportController::class, 'download'])->name('export.download');
     Route::delete('export/{filename}', [ExportController::class, 'destroy'])->name('export.destroy');
-    
-    // Rute untuk DO
-    Route::get('/admin/ransum/{id}/do/preview', [RansumController::class, 'previewDO'])->name('admin.ransum.do.preview');
-    Route::post('/admin/ransum/{id}/do/download', [RansumController::class, 'downloadDO'])->name('admin.ransum.do.download');
 
     // Ransum BPB Import
     Route::get('ransum', [RansumController::class, 'index'])->name('ransum.index');
@@ -83,6 +79,10 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::delete('ransum/{id}/items/{itemId}', [RansumController::class, 'destroyItem'])->name('ransum.items.destroy');
     Route::get('ransum/{id}/invoice', [RansumController::class, 'invoicePreview'])->name('ransum.invoice');
     Route::post('ransum/{id}/invoice/download', [RansumController::class, 'downloadInvoice'])->name('ransum.invoice.download');
+    
+    // Rute untuk DO (Cukup ditulis sekali di sini, HAPUS awalan 'admin.' pada name)
+    Route::get('ransum/{id}/do', [RansumController::class, 'doPreview'])->name('ransum.do.preview');
+    Route::post('ransum/{id}/do/download', [RansumController::class, 'downloadDo'])->name('ransum.do.download');
 
     Route::resource('vendors', VendorController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);

@@ -389,6 +389,65 @@ class RansumController extends Controller
     }
 
     // ------------------------------------------------------------------
+    // Delivery Order (DO) Preview & Download
+    // ------------------------------------------------------------------
+
+    public function doPreview(int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Delivery Order hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = [];
+        foreach ($upload->items as $item) {
+            $sec = $item->section ?? 'UNKNOWN';
+            $grouped[$sec][] = $item;
+        }
+        
+        return view('admin.ransum.do_preview', compact('upload', 'grouped'));
+    }
+
+    public function downloadDo(Request $request, int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Delivery Order hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        // Simpan data form DO ke database
+        $upload->update([
+            'no_do'         => $request->input('no_do'),
+            'request_date'  => $request->input('request_date'),
+            'delivery_date' => $request->input('delivery_date'),
+            'po_number'     => $request->input('po_number'),
+            'etb_jkt'       => $request->input('etb_jkt'),
+            'captain'       => $request->input('captain'),
+            'deliver_to'    => $request->input('deliver_to'),
+        ]);
+
+        $grouped = [];
+        foreach ($upload->items as $item) {
+            $sec = $item->section ?? 'UNKNOWN';
+            $grouped[$sec][] = $item;
+        }
+
+        $pdf = Pdf::loadView('admin.ransum.do_pdf', compact('upload', 'grouped'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'DO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+
+
+
+    // ------------------------------------------------------------------
     // Invoice Preview (web) & Download (PDF)
     // ------------------------------------------------------------------
 
@@ -399,6 +458,12 @@ class RansumController extends Controller
         if ($upload->status !== 'imported') {
             return redirect()->route('admin.ransum.preview', $upload->id)
                 ->with('error', __('Invoice hanya tersedia untuk data yang sudah diimport.'));
+        }
+        
+        // Validasi: Cek apakah no_do sudah terisi (pertanda DO sudah dibuat).
+        if (empty($upload->no_do)) {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Silakan buat Delivery Order (DO) terlebih dahulu sebelum membuat Invoice.'));
         }
 
                 // Warning: Tampilkan peringatan jika DO belum dibuat

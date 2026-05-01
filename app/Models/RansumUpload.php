@@ -41,6 +41,14 @@ class RansumUpload extends Model
         'status',
         'uploaded_by',
         'imported_at',
+        //DO
+        'no_do',
+        'request_date',
+        'delivery_date',
+        'po_number',
+        'etb_jkt',
+        'captain',
+        'deliver_to',
     ];
 
     protected $casts = [
