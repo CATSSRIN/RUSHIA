@@ -2,129 +2,152 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Delivery Order {{ $upload->no_do }}</title>
+    <title>Delivery Order - {{ $upload->no_do }}</title>
     <style>
-        @page { size: A4 portrait; margin: 40px 50px; }
-        body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; }
+        @page { size: A4 portrait; margin: 30px; }
+        body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; color: #000; }
+        
+        /* Header Title */
+        .title-container { width: 100%; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .title-left { text-align: left; }
+        .title-right { text-align: right; }
+
+        /* Table Standard */
+        table { width: 100%; border-collapse: collapse; }
+        .table-bordered { border: 1px solid #000; }
+        .table-bordered th, .table-bordered td { border: 1px solid #000; padding: 4px; vertical-align: top; }
+        
+        /* Inner tables (no border) */
+        .table-inner { border: none; }
+        .table-inner th, .table-inner td { border: none; padding: 1px 2px; vertical-align: top; }
+
+        /* Utilities */
+        .bg-yellow { background-color: #ffff00; }
         .text-center { text-align: center; }
-        .bold { font-weight: bold; }
-        .title { font-size: 18px; font-weight: bold; text-decoration: underline; text-align: center; margin-bottom: 20px; }
-        .company-name { font-size: 14px; font-weight: bold; margin-bottom: 20px; }
-        .meta-table { width: 100%; margin-bottom: 20px; font-size: 11px; }
-        .meta-table td { vertical-align: top; padding: 2px 0; }
-        .address-box { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
-        .address-box td { border: 1px solid #000; padding: 8px; vertical-align: top; width: 50%; }
-        .address-box .box-title { font-weight: bold; margin-bottom: 5px; text-decoration: underline; }
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .items-table th, .items-table td { border: 1px solid #000; padding: 5px; }
-        .items-table th { background-color: #f0f0f0; }
-        .section-row { background-color: #e8e8e8; font-weight: bold; }
-        .footer-notes { font-size: 10px; margin-top: 20px; }
-        .footer-notes ol { margin: 5px 0 0 20px; padding: 0; }
-        .signatures { width: 100%; margin-top: 30px; text-align: center; }
-        .signatures td { width: 50%; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        
+        /* Footer */
+        .footer-note { font-size: 10px; margin-top: 15px; }
+        .footer-note ol { padding-left: 15px; margin-top: 5px; margin-bottom: 15px; }
+        .signature-table td { text-align: center; font-weight: bold; border: none; padding-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="title">DELIVERY ORDER</div>
-    
-    <table class="meta-table">
+    {{-- Title DO & Company --}}
+    <table class="title-container">
         <tr>
-            <td width="60%">
-                <div class="company-name">PT ANDALAN MARITIM SEJAHTERA</div>
+            <td class="title-left">DELIVERY ORDER</td>
+            <td class="title-right">PT ANDALAN MARITIM SEJAHTERA</td>
+        </tr>
+    </table>
+
+    {{-- Header Info DO (PO, DO, Dates) --}}
+    <table class="table-bordered" style="margin-bottom: 10px;">
+        <tr>
+            <td width="50%" style="padding: 5px;">
+                <table class="table-inner">
+                    <tr><td width="25%">PO No. *</td><td width="5%">:</td><td>{{ $upload->po_number ?? '000' }}</td></tr>
+                    <tr><td>Request Date *</td><td>:</td><td>{{ \Carbon\Carbon::parse($upload->request_date)->format('d F Y') }}</td></tr>
+                </table>
             </td>
-            <td width="40%">
-                <table width="100%">
-                    <tr><td>PO No. *</td><td>: {{ $upload->po_number }}</td></tr>
-                    <tr><td>Request Date *</td><td>: {{ $upload->request_date ? \Carbon\Carbon::parse($upload->request_date)->format('d F Y') : '-' }}</td></tr>
-                    <tr><td>D/O No. *</td><td>: {{ $upload->no_do }}</td></tr>
-                    <tr><td>Delivery date</td><td>: {{ $upload->delivery_date ? \Carbon\Carbon::parse($upload->delivery_date)->format('d F Y') : '-' }}</td></tr>
+            <td width="50%" style="padding: 5px;">
+                <table class="table-inner">
+                    <tr><td width="25%">D/O No. *</td><td width="5%">:</td><td>{{ $upload->no_do }}</td></tr>
+                    <tr><td>Delivery date *</td><td>:</td><td>{{ \Carbon\Carbon::parse($upload->delivery_date)->format('d F Y') }}</td></tr>
                 </table>
             </td>
         </tr>
     </table>
 
-    <table class="address-box">
+    {{-- Deliver From & To --}}
+    <table class="table-bordered" style="margin-bottom: 10px;">
         <tr>
-            <td>
-                <div class="box-title">Deliver From</div>
-                <div>PT Andalan Maritim Sejahtera (WH JKT)</div>
-                <table width="100%" style="margin-top: 5px;">
-                    <tr><td width="20%">PIC *</td><td>: IRWINSYAH</td></tr>
-                    <tr><td>Address *</td><td>: Pergudangan INKOPAU, Jl. RE Martadinata No. 100 Blok. B03 Tanjung Priok, Jakarta Utara</td></tr>
-                    <tr><td>Phone *</td><td>: +62 857-8211-6756</td></tr>
-                    <tr><td>Email *</td><td>: irwinsyah.razi16@gmail.com</td></tr>
+            <th width="50%" class="bg-yellow text-center" style="padding: 2px;">Deliver From</th>
+            <th width="50%" class="bg-yellow text-center" style="padding: 2px;">Deliver To</th>
+        </tr>
+        <tr>
+            <td style="padding: 5px;">
+                <div class="font-bold" style="margin-bottom: 5px;">PT Andalan Maritim Sejahtera (WH JKT)</div>
+                <table class="table-inner">
+                    <tr><td width="20%">PIC *</td><td width="5%">:</td><td>IRWINSYAH</td></tr>
+                    <tr><td>Address *</td><td>:</td><td>Pergudangan INKOPAU, Jl. RE<br>Martadinata No. 100 Blok. B03<br>Tanjung Priok, Jakarta Utara</td></tr>
+                    <tr><td>Phone *</td><td>:</td><td>+62 857-8211-6756</td></tr>
+                    <tr><td>Email *</td><td>:</td><td><a href="mailto:irwinsyah.razi16@gmail.com" style="color: blue;">irwinsyah.razi16@gmail.com</a></td></tr>
                 </table>
             </td>
-            <td>
-                <div class="box-title">Deliver To</div>
-                <div>{{ $upload->deliver_to }}</div>
-                <table width="100%" style="margin-top: 5px;">
-                    <tr><td width="30%">Port *</td><td>: {{ $upload->port_tujuan ?? '-' }}</td></tr>
-                    <tr><td>ETB JKT *</td><td>: {{ $upload->etb_jkt ?? '-' }}</td></tr>
-                    <tr><td>Voy *</td><td>: {{ $upload->voyage ?? '-' }}</td></tr>
-                    <tr><td>Captain *</td><td>: {{ $upload->captain ?? '-' }}</td></tr>
-                    <tr><td>2/O/Cheff *</td><td>: {{ $upload->contact_person ?? '-' }}</td></tr>
+            <td style="padding: 5px;">
+                <table class="table-inner">
+                    <tr><td width="25%">Vessel *</td><td width="5%">:</td><td class="font-bold">{{ strtoupper($upload->vessel_name) }}</td></tr>
+                    <tr><td>Port *</td><td>:</td><td>{{ $upload->port_tujuan }}</td></tr>
+                    <tr><td>ETB JKT *</td><td>:</td><td>{{ $upload->etb_jkt ?? '-' }}</td></tr>
+                    <tr><td>Voy *</td><td>:</td><td>{{ $upload->voyage ?? '-' }}</td></tr>
+                    <tr><td>Captain *</td><td>:</td><td>{{ $upload->captain ?? '-' }}</td></tr>
+                    <tr><td>2/O / Cheff *</td><td>:</td><td>{{ $upload->two_o_cheff ?? '-' }}</td></tr>
+                    <tr><td>Phone *</td><td>:</td><td>{{ $upload->phone_deliver_to ?? '-' }}</td></tr>
                 </table>
             </td>
         </tr>
     </table>
 
-    <table class="items-table">
+    {{-- Tabel Items --}}
+    <table class="table-bordered">
         <thead>
-            <tr>
-                <th width="5%">Item No.</th>
-                <th width="45%">Description</th>
-                <th width="10%">Qty</th>
-                <th width="15%">UOM</th>
-                <th width="25%">Remark</th>
+            <tr class="bg-yellow text-center font-bold">
+                <td width="5%">No.</td>
+                <td width="30%">Item</td>
+                <td width="30%">Description</td>
+                <td width="10%">Qty</td>
+                <td width="15%">UOM</td>
+                <td width="10%">Remark</td>
             </tr>
         </thead>
         <tbody>
-            @foreach($grouped as $sectionName => $items)
-                <tr class="section-row">
-                    <td colspan="5">{{ $sectionName }}</td>
-                </tr>
+            {{-- Contoh Pengelompokan Kategori --}}
+            <tr>
+                <td></td>
+                <td colspan="5" class="font-bold">BAHAN KERING</td>
+            </tr>
+            
+            {{-- Loop data barang --}}
+            @if(isset($items) && count($items) > 0)
                 @foreach($items as $index => $item)
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td>{{ $item->nama_ransum }} <br><small><i>{{ $item->merk_spec }}</i></small></td>
-                        <td class="text-center">{{ number_format($item->qty, 2) }}</td>
-                        <td class="text-center">{{ $item->satuan }}</td>
-                        <td>{{ $item->ket_remarks }}</td>
-                    </tr>
+                <tr>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td>{{ $item->nama_barang }}</td>
+                    <td>{{ $item->spesifikasi }}</td>
+                    <td class="text-center">{{ is_numeric($item->qty) && strpos($item->qty, '.') !== false ? number_format($item->qty, 2) : $item->qty }}</td>
+                    <td>{{ $item->satuan }}</td>
+                    <td>{{ $item->remark }}</td>
+                </tr>
                 @endforeach
-            @endforeach
+            @else
+                <tr><td colspan="6" class="text-center">Tidak ada data item.</td></tr>
+            @endif
         </tbody>
     </table>
 
-    <div class="footer-notes">
-        <b>NOTE:</b>
+    {{-- Footer & TTD --}}
+    <div class="footer-note">
+        <div class="font-bold">NOTE:</div>
         <ol>
             <li>Harap untuk segera melakukan pengecekan ransum pada saat serah terima di kapal.</li>
             <li>Cek jumlah ransum, kesesuaian ransum, dan kondisi ransum pada saat serah terima di kapal.</li>
             <li>Jika ada ransum yang rusak/reject/tidak sesuai dapat berkoordinasi dengan tim delivery untuk di cek terlebih dahulu.</li>
-            <li>Kendala ransum yang rusak/reject/tidak sesuai dapat di retur/tukar langsung dengan mengembalikan ransum ke tim delivery.</li>
-            <li>Batas waktu complain/retur ransum adalah 1x24 jam.</li>
+            <li>Kendala ransum yang rusak/reject/tidak sesuai dapat di retur/tukar langsung dengan mengembalikan ransum yang rusak/reject/tidak sesuai ke tim delivery setelah terkonfirmasi bahwa ransum tersebut rusak/reject/tidak sesuai dengan melampirkan bukti foto dan video.</li>
+            <li>Batas waktu complain/retur ransum yang rusak/reject/tidak sesuai adalah 1x24 jam, atau pada saat kapal masih berada di Jakarta/Area Dermaga Pelabuhan Tanjung Priok.</li>
             <li>Segala bentuk handling dan penyimpanan di Kapal serta kerusakan ransum pada saat dalam perjalanan bukan menjadi tanggung jawab AMS.</li>
             <li>Kritik dan saran dapat menghubungi kontak PIC di atas.</li>
         </ol>
-        <div class="bold text-center" style="margin-top: 10px;">-- SEMANGAT BERTUGAS, JAGA KESEHATAN DAN KESELAMATAN --</div>
+        <div class="text-center font-bold" style="margin-top: 10px;">-- SEMANGAT BERTUGAS, JAGA KESEHATAN DAN KESELAMATAN --</div>
     </div>
 
-    <table class="signatures">
+    <table class="signature-table">
         <tr>
-            <td>
-                <div>Delivered by</div>
-                <br><br><br><br>
-                <div>( IRWINSYAH )</div>
-            </td>
-            <td>
-                <div>Received by</div>
-                <br><br><br><br>
-                <div>( ......................................... )</div>
-            </td>
+            <td width="33%">Delivered by<br><br><br><br><br>( IRWINSYAH )</td>
+            <td width="33%"></td>
+            <td width="33%">Received by<br><br><br><br><br>( ............................... )</td>
         </tr>
     </table>
 
