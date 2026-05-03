@@ -104,9 +104,9 @@
             </tr>
         </thead>
         <tbody>
-            @php $no = 1; @endphp
             @if(isset($grouped) && count($grouped) > 0)
                 @foreach($grouped as $section => $sectionItems)
+                @php $no = 1; @endphp
                 <tr>
                     <td></td>
                     <td colspan="5" class="font-bold">{{ strtoupper($section) }}</td>
