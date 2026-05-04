@@ -104,23 +104,23 @@
             </tr>
         </thead>
         <tbody>
-            {{-- Contoh Pengelompokan Kategori --}}
-            <tr>
-                <td></td>
-                <td colspan="5" class="font-bold">BAHAN KERING</td>
-            </tr>
-            
-            {{-- Loop data barang --}}
-            @if(isset($items) && count($items) > 0)
-                @foreach($items as $index => $item)
+            @if(isset($grouped) && count($grouped) > 0)
+                @foreach($grouped as $section => $sectionItems)
+                @php $no = 1; @endphp
                 <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $item->nama_barang }}</td>
-                    <td>{{ $item->spesifikasi }}</td>
-                    <td class="text-center">{{ is_numeric($item->qty) && strpos($item->qty, '.') !== false ? number_format($item->qty, 2) : $item->qty }}</td>
-                    <td>{{ $item->satuan }}</td>
-                    <td>{{ $item->remark }}</td>
+                    <td></td>
+                    <td colspan="5" class="font-bold">{{ strtoupper($section) }}</td>
                 </tr>
+                @foreach($sectionItems as $item)
+                <tr>
+                    <td class="text-center">{{ $no++ }}</td>
+                    <td>{{ $item->items }}</td>
+                    <td>{{ $item->merk_spec }}</td>
+                    <td class="text-center">{{ is_numeric($item->qty) && strpos((string)$item->qty, '.') !== false ? number_format($item->qty, 2) : $item->qty }}</td>
+                    <td>{{ $item->satuan }}</td>
+                    <td>{{ $item->ket_remarks }}</td>
+                </tr>
+                @endforeach
                 @endforeach
             @else
                 <tr><td colspan="6" class="text-center">Tidak ada data item.</td></tr>

@@ -306,7 +306,7 @@ class RansumParser
         $patterns = [
             'non_bkp'         => ['non bkp', 'non-bkp', 'nonbkp'],
             'ppn_11'          => ['ppn 11', 'ppn11', '11%'],
-            'ket_remarks'     => ['ket. remarks', 'ket remarks', 'remarks'],
+            'ket_remarks'     => ['ket. remarks', 'ket remarks', 'remarks', 'keterangan', 'ket.', 'ket'],
             'status_received' => ['status received', 'status terima', 'status diterima', 'status'],
             'good_received'   => ['good received', 'diterima baik', 'good'],
             'nama_ransum'     => ['nama ransum', 'nama'],
