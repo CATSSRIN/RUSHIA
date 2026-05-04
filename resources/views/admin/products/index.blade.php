@@ -58,7 +58,13 @@
                             <tbody class="divide-y divide-gray-200">
                                 @foreach($vendorProducts as $product)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 text-sm text-gray-500 font-mono">{{ $product->kode ?? '—' }}</td>
+                                    <td class="px-4 py-4 text-sm text-gray-500">
+                                        @if($product->kode)
+                                            <span class="font-mono">{{ $product->kode }}</span>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-4">
                                         <p class="font-medium text-gray-900">{{ $product->name }}</p>
                                         @if($product->description)<p class="text-xs text-gray-400">{{ Str::limit($product->description, 50) }}</p>@endif
