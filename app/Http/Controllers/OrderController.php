@@ -52,12 +52,12 @@ class OrderController extends Controller
 
             foreach ($request->items as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                $subtotal = $product->price * $item['quantity'];
+                $subtotal = $product->harga_jual * $item['quantity'];
                 $total += $subtotal;
                 $orderItems[] = [
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
-                    'unit_price' => $product->price,
+                    'unit_price' => $product->harga_jual,
                     'subtotal' => $subtotal,
                 ];
             }

@@ -266,7 +266,7 @@ class ProductSeeder extends Seeder
                 'name'        => $data['name'],
                 'description' => $data['description'],
                 'unit'        => $data['unit'],
-                'price'       => $data['price'],
+                'harga_jual'  => $data['price'],
                 'category'    => $data['category'],
                 'is_active'   => true,
             ]);
