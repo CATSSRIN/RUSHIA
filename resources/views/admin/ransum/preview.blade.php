@@ -154,7 +154,9 @@
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Harga Supplier') }}</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Satuan') }}</th>
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Qty') }}</th>
-                                    <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Non BKP') }}</th>
+                                    <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Non BKP') }}<br>
+                                    <span class="text-xs font-normal">({{ __('Total Harga') }})</span></th>
+
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('BKP') }}</th>
                                     <th class="px-3 py-2 text-right font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('PPN 11%') }}</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Ket. Remarks') }}</th>
