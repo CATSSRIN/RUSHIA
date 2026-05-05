@@ -569,9 +569,11 @@ public function terbilang($nilai) {
 
         // Save AMS fields to database
         $upload->update([
-            'ams_reff'     => $request->input('ams_reff') ?: $upload->ams_reff,
-            'biaya_lembur' => $request->input('biaya_lembur') ?: 0,
-            'sewa_perahu'  => $request->input('sewa_perahu') ?: 0,
+            'ams_reff'     => $request->filled('ams_reff') ? $request->input('ams_reff') : $upload->ams_reff,
+            'pemohon'      => $request->filled('pemohon') ? $request->input('pemohon') : $upload->pemohon,
+            'menyetujui'   => $request->filled('menyetujui') ? $request->input('menyetujui') : $upload->menyetujui,
+            'biaya_lembur' => $request->filled('biaya_lembur') ? $request->input('biaya_lembur') : 0,
+            'sewa_perahu'  => $request->filled('sewa_perahu') ? $request->input('sewa_perahu') : 0,
         ]);
 
         $amsReff    = $upload->ams_reff ?? ('AMS-' . str_pad($upload->id, 5, '0', STR_PAD_LEFT));
