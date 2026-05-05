@@ -554,6 +554,61 @@ public function terbilang($nilai) {
 }
 
     // ------------------------------------------------------------------
+    // Surat AMS (Provision Request List) Preview & Download
+    // ------------------------------------------------------------------
+
+    public function amsPreview(int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Surat AMS hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        return view('admin.ransum.ams_preview', compact('upload'));
+    }
+
+    public function downloadAms(Request $request, int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Surat AMS hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        // Save AMS fields to database
+        $upload->update([
+            'ams_reff'     => $request->input('ams_reff') ?: $upload->ams_reff,
+            'biaya_lembur' => $request->input('biaya_lembur') ?: 0,
+            'sewa_perahu'  => $request->input('sewa_perahu') ?: 0,
+        ]);
+
+        $amsReff    = $upload->ams_reff ?? ('AMS-' . str_pad($upload->id, 5, '0', STR_PAD_LEFT));
+        $biayaLembur = (float) ($upload->biaya_lembur ?? 0);
+        $sewaPerahu  = (float) ($upload->sewa_perahu ?? 0);
+        $totalInvoice = (float) ($upload->total_belanja_ransum ?? 0) + $biayaLembur + $sewaPerahu;
+
+        // Compute budget per person per day
+        $budgetPerOrang = null;
+        $crew  = (float) ($upload->jumlah_crew ?? 0);
+        $hari  = (float) ($upload->jumlah_hari_pensupplaian ?? 0);
+        $totalBudget = (float) ($upload->budget ?? 0);
+        if ($crew > 0 && $hari > 0 && $totalBudget > 0) {
+            $budgetPerOrang = $totalBudget / $crew / $hari;
+        }
+
+        $pdf = Pdf::loadView('admin.ransum.ams_pdf', compact(
+            'upload', 'amsReff', 'biayaLembur', 'sewaPerahu', 'totalInvoice', 'budgetPerOrang'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'surat-ams-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    // ------------------------------------------------------------------
 
     public function destroy(int $id)
     {
