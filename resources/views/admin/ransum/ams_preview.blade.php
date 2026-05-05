@@ -276,7 +276,7 @@
                         <tr>
                             <td>Sewa Perahu</td>
                             <td style="color:#333;">Boat fee</td>
-                            <td></td>
+                            <td>{{ number_format($upload->sewa_perahu ?? 0, 0, '.', ',') }}</td>
                             <td></td>
                         </tr>
                         <tr>
