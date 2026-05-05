@@ -48,11 +48,11 @@ class AdminSeeder extends Seeder
                 'email' => 'budi@sumberpangan.com',
                 'phone' => '+62-21-5550100',
                 'products' => [
-                    ['name' => 'Beras Putih (25kg)', 'category' => 'Sembako', 'price' => 520000, 'unit' => 'karung'],
-                    ['name' => 'Mie Kering (500g)', 'category' => 'Sembako', 'price' => 52000, 'unit' => 'bungkus'],
-                    ['name' => 'Ikan Tuna Kaleng', 'category' => 'Makanan Kaleng', 'price' => 45000, 'unit' => 'kaleng'],
-                    ['name' => 'Minyak Goreng (5L)', 'category' => 'Minyak & Bumbu', 'price' => 190000, 'unit' => 'botol'],
-                    ['name' => 'Gula Pasir (5kg)', 'category' => 'Sembako', 'price' => 135000, 'unit' => 'karung'],
+                    ['name' => 'Beras Putih (25kg)', 'category' => 'Sembako', 'harga_jual' => 520000, 'unit' => 'karung'],
+                    ['name' => 'Mie Kering (500g)', 'category' => 'Sembako', 'harga_jual' => 52000, 'unit' => 'bungkus'],
+                    ['name' => 'Ikan Tuna Kaleng', 'category' => 'Makanan Kaleng', 'harga_jual' => 45000, 'unit' => 'kaleng'],
+                    ['name' => 'Minyak Goreng (5L)', 'category' => 'Minyak & Bumbu', 'harga_jual' => 190000, 'unit' => 'botol'],
+                    ['name' => 'Gula Pasir (5kg)', 'category' => 'Sembako', 'harga_jual' => 135000, 'unit' => 'karung'],
                 ],
             ],
             [
@@ -61,10 +61,10 @@ class AdminSeeder extends Seeder
                 'email' => 'sari@minumanbahari.com',
                 'phone' => '+62-21-5550200',
                 'products' => [
-                    ['name' => 'Air Mineral (1.5L)', 'category' => 'Minuman', 'price' => 24000, 'unit' => 'botol'],
-                    ['name' => 'Jus Jeruk (1L)', 'category' => 'Minuman', 'price' => 60000, 'unit' => 'karton'],
-                    ['name' => 'Kopi Bubuk (500g)', 'category' => 'Minuman Panas', 'price' => 225000, 'unit' => 'bungkus'],
-                    ['name' => 'Teh Hitam (100 kantong)', 'category' => 'Minuman Panas', 'price' => 105000, 'unit' => 'kotak'],
+                    ['name' => 'Air Mineral (1.5L)', 'category' => 'Minuman', 'harga_jual' => 24000, 'unit' => 'botol'],
+                    ['name' => 'Jus Jeruk (1L)', 'category' => 'Minuman', 'harga_jual' => 60000, 'unit' => 'karton'],
+                    ['name' => 'Kopi Bubuk (500g)', 'category' => 'Minuman Panas', 'harga_jual' => 225000, 'unit' => 'bungkus'],
+                    ['name' => 'Teh Hitam (100 kantong)', 'category' => 'Minuman Panas', 'harga_jual' => 105000, 'unit' => 'kotak'],
                 ],
             ],
             [
@@ -73,10 +73,10 @@ class AdminSeeder extends Seeder
                 'email' => 'agus@rantaidingin.com',
                 'phone' => '+62-21-5550300',
                 'products' => [
-                    ['name' => 'Susu UHT (1L)', 'category' => 'Susu & Olahan', 'price' => 35000, 'unit' => 'karton'],
-                    ['name' => 'Mentega (500g)', 'category' => 'Susu & Olahan', 'price' => 88000, 'unit' => 'bungkus'],
-                    ['name' => 'Keju Slice', 'category' => 'Susu & Olahan', 'price' => 77000, 'unit' => 'bungkus'],
-                    ['name' => 'Telur Ayam (30 butir)', 'category' => 'Susu & Olahan', 'price' => 144000, 'unit' => 'tray'],
+                    ['name' => 'Susu UHT (1L)', 'category' => 'Susu & Olahan', 'harga_jual' => 35000, 'unit' => 'karton'],
+                    ['name' => 'Mentega (500g)', 'category' => 'Susu & Olahan', 'harga_jual' => 88000, 'unit' => 'bungkus'],
+                    ['name' => 'Keju Slice', 'category' => 'Susu & Olahan', 'harga_jual' => 77000, 'unit' => 'bungkus'],
+                    ['name' => 'Telur Ayam (30 butir)', 'category' => 'Susu & Olahan', 'harga_jual' => 144000, 'unit' => 'tray'],
                 ],
             ],
         ];

@@ -114,7 +114,7 @@
                 @foreach($sectionItems as $item)
                 <tr>
                     <td class="text-center">{{ $no++ }}</td>
-                    <td>{{ $item->items }}</td>
+                    <td>{{ $item->nama_ransum }}</td>
                     <td>{{ $item->merk_spec }}</td>
                     <td class="text-center">{{ is_numeric($item->qty) && strpos((string)$item->qty, '.') !== false ? number_format($item->qty, 2) : $item->qty }}</td>
                     <td>{{ $item->satuan }}</td>
