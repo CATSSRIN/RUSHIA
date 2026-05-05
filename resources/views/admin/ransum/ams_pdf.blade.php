@@ -243,16 +243,16 @@
     <table class="sig-table">
         <tr>
             <td width="50%" style="padding-top: 6px;">
-                Pemohon: &nbsp;&nbsp;{{ $upload->pemohon ?? '' }}<br><br><br>
-                <span style="border-bottom:1px solid #000; display:inline-block; width:140px;">&nbsp;</span><br>
+                Pemohon: <br><br><br>
+                <span style="border-bottom:1px solid #000; display:inline-block; width:140px;">&nbsp;</span><br><br>
                 .....................................<br>
-                <b>(Nama 2/O)</b>
+                <b>&nbsp;&nbsp;{{ $upload->pemohon ?? '' }}</b>
             </td>
             <td width="50%" style="padding-top: 6px;">
-                Menyetujui: &nbsp;&nbsp;{{ $upload->menyetujui ?? '' }}<br><br><br>
-                <span style="border-bottom:1px solid #000; display:inline-block; width:140px;">&nbsp;</span><br>
+                Menyetujui: <br><br><br>
+                <span style="border-bottom:1px solid #000; display:inline-block; width:140px;">&nbsp;</span><br><br>
                 .....................................<br>
-                <b>(Nama Master)</b>
+                <b>&nbsp;&nbsp;{{ $upload->menyetujui ?? '' }}</b>
             </td>
         </tr>
     </table>

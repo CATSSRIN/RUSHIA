@@ -34,6 +34,22 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">
+                                {{ __('Nama 2/O') }}
+                            </label>
+                            <input type="text" name="pemohon" id="pemohon"
+                                   value="{{ old('pemohon', $upload->pemohon ?? '') }}"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 uppercase mb-1">
+                                {{ __('Nama Master') }}
+                            </label>
+                            <input type="text" name="menyetujui" id="menyetujui"
+                                   value="{{ old('menyetujui', $upload->menyetujui ?? '') }}"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 uppercase mb-1">
                                 {{ __('Biaya Lembur (Over Time Charge)') }}
                             </label>
                             <input type="number" name="biaya_lembur" id="biaya_lembur" min="0" step="1"
