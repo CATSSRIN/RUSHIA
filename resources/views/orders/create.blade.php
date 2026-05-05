@@ -47,14 +47,14 @@
                                                 <p class="text-xs text-gray-400">{{ $product->category }}</p>
                                             @endif
                                         </div>
-                                        <div class="text-sm font-semibold text-indigo-600 w-24 text-right">Rp {{ number_format($product->price, 0, ",", ".") }}<span class="text-xs font-normal text-gray-400">/{{ $product->unit }}</span></div>
+                                        <div class="text-sm font-semibold text-indigo-600 w-24 text-right">Rp {{ number_format($product->harga_jual, 0, ",", ".") }}<span class="text-xs font-normal text-gray-400">/{{ $product->unit }}</span></div>
                                         <div class="flex items-center gap-2">
                                             <button type="button" @click="decrement({{ $product->id }})" class="w-7 h-7 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition font-bold">−</button>
                                             <input type="number" min="0"
                                                 x-model.number="quantities[{{ $product->id }}]"
                                                 @change="setQuantity({{ $product->id }}, $event.target.value)"
                                                 class="w-14 text-center border-gray-300 rounded-lg text-sm py-1 focus:ring-indigo-500 focus:border-indigo-500" />
-                                            <button type="button" @click="increment({{ $product->id }}, {{ $product->price }})" class="w-7 h-7 flex items-center justify-center bg-indigo-100 hover:bg-indigo-200 rounded-full text-indigo-600 transition font-bold">+</button>
+                                            <button type="button" @click="increment({{ $product->id }}, {{ $product->harga_jual }})" class="w-7 h-7 flex items-center justify-center bg-indigo-100 hover:bg-indigo-200 rounded-full text-indigo-600 transition font-bold">+</button>
                                         </div>
                                     </div>
                                     @endforeach
@@ -128,7 +128,7 @@
 
     <script>
     function orderForm() {
-        const productData = @json($vendors->flatMap(fn($v) => $v->products)->mapWithKeys(fn($p) => [$p->id => ['name' => $p->name, 'price' => (float)$p->price]]));
+        const productData = @json($vendors->flatMap(fn($v) => $v->products)->mapWithKeys(fn($p) => [$p->id => ['name' => $p->name, 'price' => (float)$p->harga_jual]]));
 
         return {
             quantities: {},

@@ -9,10 +9,23 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('vendor')->latest()->get();
-        return view('admin.products.index', compact('products'));
+        $search = $request->input('search');
+
+        $query = Product::with('vendor')->latest();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('kode', 'like', "%{$search}%")
+                  ->orWhereHas('vendor', fn($v) => $v->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $products = $query->get()->groupBy(fn($p) => $p->vendor->name ?? 'Unknown');
+
+        return view('admin.products.index', compact('products', 'search'));
     }
 
     public function create()
@@ -25,15 +38,17 @@ class ProductController extends Controller
     {
         $request->validate([
             'vendor_id' => ['required', 'exists:vendors,id'],
+            'kode' => ['nullable', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'harga_supplier' => ['nullable', 'numeric', 'min:0'],
+            'harga_jual' => ['required', 'numeric', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
         ]);
 
-        Product::create($request->only('vendor_id', 'name', 'category', 'description', 'price', 'unit') + [
+        Product::create($request->only('vendor_id', 'kode', 'name', 'category', 'description', 'harga_supplier', 'harga_jual', 'unit') + [
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -50,14 +65,16 @@ class ProductController extends Controller
     {
         $request->validate([
             'vendor_id' => ['required', 'exists:vendors,id'],
+            'kode' => ['nullable', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'harga_supplier' => ['nullable', 'numeric', 'min:0'],
+            'harga_jual' => ['required', 'numeric', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
         ]);
 
-        $product->update($request->only('vendor_id', 'name', 'category', 'description', 'price', 'unit') + [
+        $product->update($request->only('vendor_id', 'kode', 'name', 'category', 'description', 'harga_supplier', 'harga_jual', 'unit') + [
             'is_active' => $request->boolean('is_active'),
         ]);
 
