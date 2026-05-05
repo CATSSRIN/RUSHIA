@@ -567,14 +567,19 @@ public function terbilang($nilai) {
                 ->with('error', __('Surat AMS hanya tersedia untuk data yang sudah diimport.'));
         }
 
+        $amsReffInput = $request->input('ams_reff');
+        $pemohonInput = $request->input('pemohon');
+        $menyetujuiInput = $request->input('menyetujui');
+
         // Save AMS fields to database
         $upload->update([
-            'ams_reff'     => $request->filled('ams_reff') ? $request->input('ams_reff') : $upload->ams_reff,
-            'pemohon'      => $request->filled('pemohon') ? $request->input('pemohon') : $upload->pemohon,
-            'menyetujui'   => $request->filled('menyetujui') ? $request->input('menyetujui') : $upload->menyetujui,
+            'ams_reff'     => $request->filled('ams_reff') ? trim($amsReffInput) : $upload->ams_reff,
+            'pemohon'      => $request->filled('pemohon') ? trim($pemohonInput) : $upload->pemohon,
+            'menyetujui'   => $request->filled('menyetujui') ? trim($menyetujuiInput) : $upload->menyetujui,
             'biaya_lembur' => $request->filled('biaya_lembur') ? $request->input('biaya_lembur') : 0,
             'sewa_perahu'  => $request->filled('sewa_perahu') ? $request->input('sewa_perahu') : 0,
         ]);
+        $upload->refresh();
 
         $amsReff    = $upload->ams_reff ?? ('AMS-' . str_pad($upload->id, 5, '0', STR_PAD_LEFT));
         $biayaLembur = (float) ($upload->biaya_lembur ?? 0);
