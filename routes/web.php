@@ -83,6 +83,8 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     // Rute untuk DO (Cukup ditulis sekali di sini, HAPUS awalan 'admin.' pada name)
     Route::get('ransum/{id}/do', [RansumController::class, 'doPreview'])->name('ransum.do.preview');
     Route::post('ransum/{id}/do/download', [RansumController::class, 'downloadDo'])->name('ransum.do.download');
+    Route::get('ransum/{id}/ams', [RansumController::class, 'amsPreview'])->name('ransum.ams.preview');
+    Route::post('ransum/{id}/ams/download', [RansumController::class, 'downloadAms'])->name('ransum.ams.download');
 
     Route::resource('vendors', VendorController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);
