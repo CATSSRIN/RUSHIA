@@ -49,6 +49,9 @@ class RansumUpload extends Model
         'etb_jkt',
         'captain',
         'deliver_to',
+        'ams_reff',
+        'biaya_lembur',
+        'sewa_perahu',
     ];
 
     protected $casts = [
@@ -59,6 +62,8 @@ class RansumUpload extends Model
         'budget' => 'decimal:2',
         'total_belanja_ransum' => 'decimal:2',
         'selisih_anggaran' => 'decimal:2',
+        'biaya_lembur' => 'decimal:2',
+        'sewa_perahu' => 'decimal:2',
     ];
 
     public function uploader(): BelongsTo
