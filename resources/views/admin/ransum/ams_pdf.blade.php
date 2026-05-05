@@ -5,7 +5,7 @@
     <title>Surat AMS - {{ $upload->vessel_name }}</title>
     <style>
         @page { size: A4 portrait; margin: 20px 25px 25px 25px; }
-        body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; color: #000; }
+        body { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.3; color: #000; }
 
         .text-center { text-align: center; }
         .text-right  { text-align: right; }
@@ -13,20 +13,20 @@
 
         /* Green company header */
         .header-green {
-            background-color: #00b050;
-            color: #fff;
+            background-color: #fff;
+            color: #000;
             text-align: center;
-            font-size: 15px;
+            font-size: 17px;
             font-weight: bold;
             padding: 7px 4px;
         }
 
         /* Purple title */
         .header-purple {
-            background-color: #7030a0;
-            color: #fff;
+            background-color: #fff;
+            color: #000;
             text-align: center;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: bold;
             padding: 5px 4px;
             margin-bottom: 8px;
@@ -50,18 +50,18 @@
             padding: 6px;
             text-align: center;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 12px;
             margin-bottom: 6px;
         }
-        .date-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .date-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         .date-table td { border: 1px solid #000; text-align: center; padding: 3px; }
         .over-budget {
-            background-color: #ff0000;
+            background-color: #000;
             color: #fff;
             font-weight: bold;
             padding: 4px 6px;
             margin-top: 6px;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         /* Signature */
@@ -70,30 +70,36 @@
 
         /* Tagihan purple section */
         .tagihan-header {
-            background-color: #cc99ff;
+            background-color: #fff;
+            border: 1px solid #000;
+            border-bottom: none;
+            color: #000;
             font-weight: bold;
             padding: 5px 6px;
             margin-top: 10px;
-            font-size: 10px;
+            font-size: 12px;
         }
         .tagihan-body {
-            background-color: #cc99ff;
+            background-color: #fff;
+            border: 1px solid #000;
+            border-top: none;
             padding: 4px 6px 6px 6px;
         }
-        .tagihan-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .tagihan-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .tagihan-table td { padding: 2px 3px; vertical-align: top; }
 
         /* Tanda terima */
         .tanda-header {
-            background-color: #d0d0d0;
+            background-color: #adadadff;
+            color: #000;
             text-align: center;
             font-weight: bold;
             padding: 5px;
             margin-top: 8px;
-            font-size: 10px;
+            font-size: 12px;
             letter-spacing: 1px;
         }
-        .tanda-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        .tanda-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         .tanda-table td { padding: 5px 2px; vertical-align: bottom; }
         .dot-line { border-bottom: 1px dotted #000; min-width: 200px; }
     </style>
@@ -138,16 +144,15 @@
 
                 <table class="budget-table">
                     <tr>
-                        <td width="4%" class="bold">ANGGARAN</td>
-                        <td></td>
-                        <td class="bold" style="color:#7030a0;">BUDGET</td>
+                        <td colspan="2" class="bold">ANGGARAN</td>
+                        <td class="bold" style="color:#000;">BUDGET</td>
                         <td></td>
                         <td></td>
                     </tr>
                     <tr>
-                        <td>A</td>
+                        <td width="20px">A</td>
                         <td class="bold">Anggaran per hari/per orang</td>
-                        <td style="color:#7030a0; font-size:9px;">Budget per day/per person</td>
+                        <td style="color:#000; font-size:11px;">Budget per day/per person</td>
                         <td></td>
                         <td class="text-right">
                             {{ $budgetPerOrang !== null ? number_format($budgetPerOrang, 0, '.', ',') : '' }}
@@ -156,21 +161,21 @@
                     <tr>
                         <td>B</td>
                         <td class="bold">Jumlah crew</td>
-                        <td style="color:#7030a0; font-size:9px;">Crew number</td>
+                        <td style="color:#000; font-size:11px;">Crew number</td>
                         <td></td>
                         <td class="text-right">{{ $upload->jumlah_crew ?? '' }}</td>
                     </tr>
                     <tr>
                         <td>C</td>
                         <td class="bold">Jumlah hari pensupplaian</td>
-                        <td style="color:#7030a0; font-size:9px;">Total days to be supplied</td>
+                        <td style="color:#000; font-size:11px;">Total days to be supplied</td>
                         <td></td>
                         <td class="text-right">{{ $upload->jumlah_hari_pensupplaian ?? '' }}</td>
                     </tr>
                     <tr>
                         <td>D</td>
                         <td class="bold">Total Anggaran ransum (Rupiah)</td>
-                        <td style="color:#7030a0; font-size:9px;">Total Budget</td>
+                        <td style="color:#000; font-size:11px;">Total Budget</td>
                         <td></td>
                         <td class="text-right">{{ $upload->budget ? number_format($upload->budget, 0, '.', ',') : '' }}</td>
                     </tr>
@@ -200,15 +205,15 @@
                     </tr>
                     <tr>
                         <td></td>
-                        <td class="bold" style="padding-top:3px;"><b>Total Belanja</b></td>
-                        <td style="color:#7030a0; font-size:9px; padding-top:3px;"><b>Total Purchase</b></td>
+                        <td class="bold text-center" style="padding-top:3px;">Total Belanja</td>
+                        <td class="bold text-center" style="color:#000; font-size:11px; padding-top:3px;">Total Purchase</td>
                         <td></td>
                         <td class="text-right bold" style="padding-top:3px;">{{ number_format($upload->total_belanja_ransum ?? 0, 0, '.', ',') }}</td>
                     </tr>
                     <tr>
                         <td>F</td>
                         <td class="bold">Selisih Anggaran &amp;<br>Pembelanjaan Ransum A-E</td>
-                        <td style="color:#7030a0; font-size:9px;">Balance of Budget<br>and Purchase A-E</td>
+                        <td style="color:#000; font-size:11px;">Balance of Budget<br>and Purchase A-E</td>
                         <td></td>
                         <td class="text-right">{{ $upload->selisih_anggaran !== null ? number_format($upload->selisih_anggaran, 0, '.', ',') : '' }}</td>
                     </tr>
@@ -216,22 +221,20 @@
 
             </td>
             <td width="35%" style="vertical-align: top; padding-left: 4px;">
-                <div class="fill-box">FILL IN THE BLANKS !!!</div>
                 <table class="date-table">
                     <tr>
                         <td class="bold">Start Date</td>
                         <td class="bold">End Date</td>
                     </tr>
                     <tr>
-                        <td>{{ $upload->date_start ?? '' }}</td>
-                        <td>{{ $upload->date_end ?? '' }}</td>
+                        <td>{{ !empty($upload->date_start) ? \Carbon\Carbon::parse($upload->date_start)->format('d-M-Y') : '' }}</td>
+                        <td>{{ !empty($upload->date_end) ? \Carbon\Carbon::parse($upload->date_end)->format('d-M-Y') : '' }}</td>
                     </tr>
                     <tr>
-                        <td style="color:#888; font-size:9px;">MM/DD/YYYY</td>
-                        <td style="color:#888; font-size:9px;">MM/DD/YYYY</td>
+                        <td style="color:#000; font-size:12px;">{{ !empty($upload->date_start) ? \Carbon\Carbon::parse($upload->date_start)->format('m/d/Y') : 'MM/DD/YYYY' }}</td>
+                        <td style="color:#000; font-size:12px;">{{ !empty($upload->date_end) ? \Carbon\Carbon::parse($upload->date_end)->format('m/d/Y') : 'MM/DD/YYYY' }}</td>
                     </tr>
                 </table>
-                <div class="over-budget">&#x27A1; Tidak boleh over budget</div>
             </td>
         </tr>
     </table>
@@ -260,19 +263,19 @@
         <table class="tagihan-table">
             <tr>
                 <td width="25%">Total Belanja</td>
-                <td width="25%" style="color:#333;">Total Purchase</td>
+                <td width="25%" style="color:#000;">Total Purchase</td>
                 <td width="25%">{{ number_format($upload->total_belanja_ransum ?? 0, 0, '.', ',') }}</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Biaya Lembur</td>
-                <td style="color:#333;">Over time charge</td>
+                <td style="color:#000;">Over time charge</td>
                 <td>{{ $biayaLembur > 0 ? number_format($biayaLembur, 0, '.', ',') : '' }}</td>
                 <td></td>
             </tr>
             <tr>
                 <td>Sewa Perahu</td>
-                <td style="color:#333;">Boat fee</td>
+                <td style="color:#000;">Boat fee</td>
                 <td>{{ $sewaPerahu > 0 ? number_format($sewaPerahu, 0, '.', ',') : '' }}</td>
                 <td></td>
             </tr>
