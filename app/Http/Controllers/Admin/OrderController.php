@@ -40,10 +40,14 @@ class OrderController extends Controller
 
         $byVendor = [];
         foreach ($order->items as $item) {
-            $vendorId = $item->product->vendor_id;
+            $vendor = $item->product->vendor ?? null;
+            if ($vendor === null) {
+                continue;
+            }
+            $vendorId = $vendor->id;
             if (!isset($byVendor[$vendorId])) {
                 $byVendor[$vendorId] = [
-                    'vendor'   => $item->product->vendor,
+                    'vendor'   => $vendor,
                     'items'    => [],
                     'subtotal' => 0,
                 ];
@@ -59,7 +63,12 @@ class OrderController extends Controller
     {
         $order->load('user', 'ship', 'items.product.vendor');
 
-        $items    = $order->items->filter(fn($item) => $item->product->vendor_id === $vendor->id)->values();
+        $items    = $order->items->filter(fn($item) => $item->product->vendor !== null && $item->product->vendor_id === $vendor->id)->values();
+
+        if ($items->isEmpty()) {
+            return redirect()->route('admin.orders.po.preview', $order)->with('error', __('Tidak ada item untuk vendor ini.'));
+        }
+
         $subtotal = $items->sum('subtotal');
 
         $pdf = Pdf::loadView('admin.orders.po_pdf', compact('order', 'vendor', 'items', 'subtotal'))
