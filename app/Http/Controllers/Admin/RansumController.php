@@ -430,6 +430,8 @@ class RansumController extends Controller
             'deliver_to'    => $request->input('deliver_to'),
         ]);
 
+        session()->flash('success', __('Delivery Order (DO) berhasil disimpan: ') . $request->input('no_do'));
+
         $grouped = [];
         foreach ($upload->items as $item) {
             $sec = $item->section ?? 'UNKNOWN';

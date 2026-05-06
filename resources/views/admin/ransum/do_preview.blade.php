@@ -11,6 +11,9 @@
     </x-slot>
 
     <div class="py-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        @if(session('success'))
+            <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">{{ session('success') }}</div>
+        @endif
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
             <form method="POST" action="{{ route('admin.ransum.do.download', $upload->id) }}">
                 @csrf
