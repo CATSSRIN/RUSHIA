@@ -139,7 +139,7 @@
                                         <td class="px-6 py-4 text-sm text-gray-500">
                                             {{ $ransum->delivery_date ? \Carbon\Carbon::parse($ransum->delivery_date)->format('d M Y') : '—' }}
                                         </td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">{{ $ransum->created_at->format('M d, Y') }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">{{ $ransum->created_at->format('d M Y') }}</td>
                                         <td class="px-6 py-4 text-right">
                                             <div class="flex justify-end gap-2">
                                                 <a href="{{ route('admin.ransum.do.preview', $ransum->id) }}"
