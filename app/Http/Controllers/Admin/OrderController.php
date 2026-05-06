@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\RansumUpload;
 use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -14,7 +15,11 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::with('user', 'ship', 'items.product.vendor')->latest()->get();
-        return view('admin.orders.index', compact('orders'));
+        $ransumOrders = RansumUpload::whereNotNull('no_do')
+            ->where('no_do', '!=', '')
+            ->orderByDesc('created_at')
+            ->get();
+        return view('admin.orders.index', compact('orders', 'ransumOrders'));
     }
 
     public function show(Order $order)
