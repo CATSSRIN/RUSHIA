@@ -92,6 +92,8 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}/status/{status}', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
     Route::get('orders/{order}/invoice', [AdminOrderController::class, 'downloadInvoice'])->name('orders.invoice');
+    Route::get('orders/{order}/po', [AdminOrderController::class, 'poPreview'])->name('orders.po.preview');
+    Route::get('orders/{order}/po/vendor/{vendor}', [AdminOrderController::class, 'downloadPo'])->name('orders.po.download');
 
     // Users
     Route::get('users', [AdminUserController::class, 'index'])->name('users.index');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends Controller
@@ -31,5 +32,41 @@ class OrderController extends Controller
         $order->load('user', 'ship', 'items.product.vendor');
         $pdf = Pdf::loadView('admin.orders.invoice', compact('order'));
         return $pdf->download('invoice-order-' . $order->id . '.pdf');
+    }
+
+    public function poPreview(Order $order)
+    {
+        $order->load('user', 'ship', 'items.product.vendor');
+
+        $byVendor = [];
+        foreach ($order->items as $item) {
+            $vendorId = $item->product->vendor_id;
+            if (!isset($byVendor[$vendorId])) {
+                $byVendor[$vendorId] = [
+                    'vendor'   => $item->product->vendor,
+                    'items'    => [],
+                    'subtotal' => 0,
+                ];
+            }
+            $byVendor[$vendorId]['items'][]  = $item;
+            $byVendor[$vendorId]['subtotal'] += $item->subtotal;
+        }
+
+        return view('admin.orders.po_preview', compact('order', 'byVendor'));
+    }
+
+    public function downloadPo(Order $order, Vendor $vendor)
+    {
+        $order->load('user', 'ship', 'items.product.vendor');
+
+        $items    = $order->items->filter(fn($item) => $item->product->vendor_id === $vendor->id)->values();
+        $subtotal = $items->sum('subtotal');
+
+        $pdf = Pdf::loadView('admin.orders.po_pdf', compact('order', 'vendor', 'items', 'subtotal'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'PO-order-' . $order->id . '-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $vendor->name) . '.pdf';
+
+        return $pdf->download($filename);
     }
 }
