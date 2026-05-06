@@ -61,7 +61,7 @@
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ $order->created_at->format('M d, Y') }}</td>
                                 <td class="px-6 py-4">
                                     @php
-                                        $vendors = $order->items->map(fn($i) => $i->product->vendor)->unique('id')->values();
+                                        $vendors = $order->items->map(fn($i) => $i->product?->vendor)->filter()->unique('id')->values();
                                     @endphp
                                     @if($vendors->isNotEmpty())
                                         <div class="flex flex-col gap-1">
