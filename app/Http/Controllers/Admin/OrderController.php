@@ -39,7 +39,7 @@ class OrderController extends Controller
     public function poPreview(Order $order, Vendor $vendor)
     {
         $order->load('user', 'ship', 'items.product.vendor');
-        $items = $order->items->filter(fn($item) => $item->product->vendor_id === $vendor->id)->values();
+        $items = $order->items->filter(fn($item) => $item->product?->vendor_id === $vendor->id)->values();
 
         if ($items->isEmpty()) {
             return redirect()->route('admin.orders.index')
@@ -52,7 +52,7 @@ class OrderController extends Controller
     public function downloadPo(Request $request, Order $order, Vendor $vendor)
     {
         $order->load('user', 'ship', 'items.product.vendor');
-        $items = $order->items->filter(fn($item) => $item->product->vendor_id === $vendor->id)->values();
+        $items = $order->items->filter(fn($item) => $item->product?->vendor_id === $vendor->id)->values();
 
         if ($items->isEmpty()) {
             return redirect()->route('admin.orders.index')
