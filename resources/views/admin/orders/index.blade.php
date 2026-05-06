@@ -89,7 +89,6 @@
                                     <div class="flex justify-end gap-2">
                                         <a href="{{ route('admin.orders.show', $order) }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('View') }}</a>
                                         <a href="{{ route('admin.orders.invoice', $order) }}" class="text-green-600 hover:text-green-800 text-sm font-medium">{{ __('PDF') }}</a>
-                                        <a href="{{ route('admin.orders.po.preview', $order) }}" class="text-orange-600 hover:text-orange-800 text-sm font-medium">{{ __('Buat PO') }}</a>
                                     </div>
                                 </td>
                             </tr>
