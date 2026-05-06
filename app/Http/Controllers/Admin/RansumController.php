@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RansumController extends Controller
@@ -629,5 +630,83 @@ public function terbilang($nilai) {
 
         return redirect()->route('admin.ransum.index')
             ->with('success', __('Upload berhasil dihapus.'));
+    }
+
+    // ------------------------------------------------------------------
+    // PO Preview – items grouped per vendor/supplier (editable)
+    // ------------------------------------------------------------------
+
+    public function poPreview(int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('PO hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = [];
+        foreach ($upload->items as $item) {
+            $sup = trim($item->supplier) ?: 'UNKNOWN';
+            if (!isset($grouped[$sup])) {
+                $grouped[$sup] = [];
+            }
+            $grouped[$sup][] = $item;
+        }
+        ksort($grouped);
+
+        return view('admin.ransum.po_preview', compact('upload', 'grouped'));
+    }
+
+    public function downloadRansumPo(Request $request, int $id, string $supplierKey)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('PO hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $items = $upload->items->filter(function ($item) use ($supplierKey) {
+            $sup = trim($item->supplier) ?: 'UNKNOWN';
+            return Str::slug($sup) === $supplierKey;
+        })->values();
+
+        if ($items->isEmpty()) {
+            return redirect()->route('admin.ransum.po.preview', $upload->id)
+                ->with('error', __('Tidak ada item untuk vendor ini.'));
+        }
+
+        $supplierName = trim($items->first()->supplier) ?: 'UNKNOWN';
+
+        $formData = $request->only([
+            'po_number', 'po_date', 'delivery_date', 'vessel_name', 'voyage',
+            'vendor_name', 'vendor_address', 'vendor_phone', 'vendor_email',
+            'deliver_to', 'notes', 'prepared_by', 'approved_by',
+        ]);
+
+        $editedItems = [];
+        $grandTotal  = 0;
+        foreach ($items as $idx => $item) {
+            $qty    = max(0, (float) $request->input("items.{$idx}.qty", $item->qty));
+            $harga  = max(0, (float) $request->input("items.{$idx}.harga", $item->harga));
+            $sub    = $qty * $harga;
+            $grandTotal += $sub;
+            $editedItems[] = [
+                'nama_ransum' => $request->input("items.{$idx}.nama_ransum", $item->nama_ransum),
+                'satuan'      => $request->input("items.{$idx}.satuan", $item->satuan),
+                'qty'         => $qty,
+                'harga'       => $harga,
+                'subtotal'    => $sub,
+                'keterangan'  => $request->input("items.{$idx}.keterangan", ''),
+            ];
+        }
+
+        $pdf = Pdf::loadView('admin.ransum.po_pdf', compact('upload', 'supplierName', 'formData', 'editedItems', 'grandTotal'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'PO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '-' . $supplierKey . '.pdf';
+
+        return $pdf->download($filename);
     }
 }
