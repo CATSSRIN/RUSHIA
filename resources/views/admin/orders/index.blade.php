@@ -98,6 +98,64 @@
                     </div>
                 </div>
             @endif
+
+            {{-- ── Delivery Orders dari Ransum (no_do sudah dibuat) ─────── --}}
+            <div class="mt-8">
+                <h3 class="text-base font-semibold text-gray-700 mb-3">{{ __('Delivery Orders (DO) – Ransum') }}</h3>
+                @if($ransumOrders->isEmpty())
+                    <div class="text-center py-10 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-gray-400 text-sm">{{ __('Belum ada Delivery Order yang dibuat.') }}</p>
+                    </div>
+                @else
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-100">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('No. DO') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Kapal') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Voyage') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Vendor') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Total') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Tgl. Pengiriman') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Dibuat') }}</th>
+                                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Aksi') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    @foreach($ransumOrders as $ransum)
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $ransum->no_do }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-700">{{ $ransum->vessel_name ?? '—' }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">{{ $ransum->voyage ?? '—' }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-700">{{ $ransum->vendor_name ?? '—' }}</td>
+                                        <td class="px-6 py-4 text-sm font-semibold">
+                                            @if($ransum->total_belanja_ransum)
+                                                Rp {{ number_format($ransum->total_belanja_ransum, 0, ',', '.') }}
+                                            @else
+                                                <span class="text-gray-300">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">
+                                            {{ $ransum->delivery_date ? \Carbon\Carbon::parse($ransum->delivery_date)->format('d M Y') : '—' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">{{ $ransum->created_at->format('M d, Y') }}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <div class="flex justify-end gap-2">
+                                                <a href="{{ route('admin.ransum.do.preview', $ransum->id) }}"
+                                                   class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('DO') }}</a>
+                                                <a href="{{ route('admin.ransum.preview', $ransum->id) }}"
+                                                   class="text-gray-500 hover:text-gray-700 text-sm font-medium">{{ __('Detail') }}</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 </x-app-layout>
