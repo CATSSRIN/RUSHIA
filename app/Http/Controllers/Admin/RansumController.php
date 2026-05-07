@@ -713,10 +713,13 @@ public function terbilang($nilai) {
             ->unique()
             ->values();
 
-        $productsByCode = Product::with('vendor:id,name')
-            ->whereIn('kode', $codes)
-            ->get()
-            ->keyBy(fn (Product $product) => $this->normalizeProductCode($product->kode));
+        $productsByCode = collect();
+        if ($codes->isNotEmpty()) {
+            $productsByCode = Product::with('vendor:id,name')
+                ->whereIn('kode', $codes)
+                ->get()
+                ->keyBy(fn (Product $product) => $this->normalizeProductCode($product->kode));
+        }
 
         $grouped = [];
         foreach ($items as $item) {
