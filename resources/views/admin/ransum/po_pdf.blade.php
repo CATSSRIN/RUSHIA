@@ -2,221 +2,276 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Purchase Order – {{ $supplierName }}</title>
+    <title>Purchase Order – {{ request('vendor_name') ?? $supplierName }}</title>
     <style>
-        @page { size: A4 portrait; margin: 28px 32px; }
+        @page { size: A4 portrait; margin: 30px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #111827; line-height: 1.35; }
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.3; }
 
-        .header-company { font-size: 17px; font-weight: bold; color: #1e3a5f; }
-        .header-sub     { font-size: 10px; color: #6b7280; margin-top: 2px; }
-        .po-title       { font-size: 20px; font-weight: bold; color: #374151; letter-spacing: 2px; }
-        .po-number      { font-weight: 600; color: #1e3a5f; font-size: 12px; }
-
-        table  { width: 100%; border-collapse: collapse; }
-        .main-divider { border: none; border-top: 2px solid #1e3a5f; margin: 8px 0 12px; }
-
-        .info-table td  { padding: 2px 0; vertical-align: top; }
-        .info-label     { color: #6b7280; width: 38%; }
-        .info-sep       { width: 5%; }
-
-        .box-table      { border: 1px solid #d1d5db; margin-bottom: 12px; }
-        .box-table th   { background: #f3f4f6; padding: 5px 8px; text-align: left;
-                          font-size: 9px; text-transform: uppercase; letter-spacing: .04em;
-                          color: #6b7280; border-bottom: 1px solid #d1d5db; }
-        .box-table td   { padding: 5px 8px; vertical-align: top; }
-        .box-half       { width: 50%; }
-        .box-divider    { border-right: 1px solid #d1d5db; }
-
-        .items-table thead th {
-            background: #1e3a5f; color: #fff;
-            padding: 7px 8px; font-size: 10px;
-            border: 1px solid #1e3a5f;
-        }
-        .items-table tbody td {
-            padding: 5px 8px; border: 1px solid #e5e7eb; vertical-align: top;
-        }
-        .items-table tfoot td {
-            padding: 7px 8px; font-weight: bold; border: 1px solid #d1d5db;
-        }
-        .total-label { text-align: right; color: #374151; }
-        .total-value { text-align: right; color: #1e3a5f; font-size: 13px; }
-
-        .sig-table td { text-align: center; padding: 4px 8px; }
-        .sig-line { border-top: 1px solid #9ca3af; margin-top: 40px; padding-top: 4px; font-size: 10px; color: #6b7280; }
-        .footer { text-align: center; font-size: 9px; color: #9ca3af; margin-top: 10px; padding-top: 8px; border-top: 1px solid #e5e7eb; }
+        /* Master Table Class */
+        .excel-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .excel-table th, .excel-table td { border: 1px solid #000; }
+        
+        /* Helper Classes */
+        .bg-yellow { background-color: #fde047; font-weight: bold; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .p-1 { padding: 4px 6px; }
+        .align-top { vertical-align: top; }
+        .border-none { border: none !important; }
+        .border-bottom { border-bottom: 1px solid #000 !important; }
+        .border-right { border-right: 1px solid #000 !important; }
+        
+        /* Specific Inner Tables */
+        .inner-table { width: 100%; border-collapse: collapse; border: none; }
+        .inner-table td { border: none; padding: 4px 6px; }
     </style>
 </head>
 <body>
-    {{-- Header --}}
-    <table style="margin-bottom:8px;">
+
+    @php
+        // Mengambil data langsung dari request form saat submit, mengantisipasi jika controller tidak meneruskannya
+        $val_po_number = request('po_number') ?? $formData['po_number'] ?? '';
+        
+        $po_date_raw = request('po_date') ?? $formData['po_date'] ?? null;
+        $val_po_date = $po_date_raw ? \Carbon\Carbon::parse($po_date_raw)->format('d M Y') : now()->format('d M Y');
+        
+        $deliv_date_raw = request('delivery_date') ?? $formData['delivery_date'] ?? null;
+        $val_deliv_date = $deliv_date_raw ? \Carbon\Carbon::parse($deliv_date_raw)->format('d M Y') : '';
+
+        $val_vessel = request('vessel_name') ?? $formData['vessel_name'] ?? $upload->vessel_name ?? '';
+        $val_etb = request('etb') ?? $formData['etb'] ?? '';
+
+        $val_vendor_name = request('vendor_name') ?? $formData['vendor_name'] ?? $supplierName;
+        $val_vendor_pic = request('vendor_contact_name') ?? $formData['vendor_contact_name'] ?? '';
+        $val_vendor_address = request('vendor_address') ?? $formData['vendor_address'] ?? '';
+        $val_vendor_phone = request('vendor_phone') ?? $formData['vendor_phone'] ?? '';
+        $val_vendor_email = request('vendor_email') ?? $formData['vendor_email'] ?? '';
+
+        $val_deliver_to = request('deliver_to') ?? $formData['deliver_to'] ?? 'PT Andalan Maritim Sejahtera';
+        $val_ship_pic = request('ship_to_pic') ?? $formData['ship_to_pic'] ?? '';
+        $val_ship_address = request('ship_to_address') ?? $formData['ship_to_address'] ?? '';
+        $val_ship_phone = request('ship_to_phone') ?? $formData['ship_to_phone'] ?? '';
+        $val_ship_email = request('ship_to_email') ?? $formData['ship_to_email'] ?? '';
+
+        $val_notes = request('notes') ?? $formData['notes'] ?? '';
+        $val_discount = request('discount') ?? $formData['discount'] ?? '';
+        $val_vat = request('vat') ?? $formData['vat'] ?? '';
+        $val_shipping = request('shipping') ?? $formData['shipping'] ?? '';
+        $val_prepared_by = request('prepared_by') ?? $formData['prepared_by'] ?? '';
+    @endphp
+
+    {{-- Header Title --}}
+    <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 5px;">
         <tr>
-            <td style="vertical-align:top;">
-                <div class="header-company">PT ANDALAN MARITIM SEJAHTERA</div>
-                <div class="header-sub">Ship Supply Management</div>
-            </td>
-            <td style="text-align:right; vertical-align:top;">
-                <div class="po-title">PURCHASE ORDER</div>
-                <div class="po-number" style="margin-top:4px;">No. PO: {{ $formData['po_number'] ?? '' }}</div>
-            </td>
+            <td style="width: 50%; font-size: 16px; font-weight: bold; border: none;">PURCHASE ORDER</td>
+            <td style="width: 50%; font-size: 16px; font-weight: bold; border: none; padding-left: 20px;">PT ANDALAN MARITIM SEJAHTERA</td>
         </tr>
     </table>
 
-    <hr class="main-divider">
-
-    {{-- Dates & Vessel --}}
-    <table style="margin-bottom:12px;">
+    {{-- Info Header (PO No, Ves, dll) --}}
+    <table class="excel-table">
         <tr>
-            <td style="width:50%; vertical-align:top; padding-right:16px;">
-                <table class="info-table">
+            <td style="width: 50%; padding: 0; border: 1px solid #000; vertical-align: top;">
+                <table class="inner-table">
                     <tr>
-                        <td class="info-label">Tanggal PO</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ isset($formData['po_date']) ? \Carbon\Carbon::parse($formData['po_date'])->format('d M Y') : now()->format('d M Y') }}</td>
+                        <td class="border-bottom border-right" style="width: 25%;">PO No.</td>
+                        <td class="border-bottom" style="width: 75%;">: <strong>{{ $val_po_number ?: '-' }}</strong></td>
                     </tr>
                     <tr>
-                        <td class="info-label">Tanggal Pengiriman</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ isset($formData['delivery_date']) ? \Carbon\Carbon::parse($formData['delivery_date'])->format('d M Y') : '' }}</td>
+                        <td class="border-bottom border-right">Request Date</td>
+                        <td class="border-bottom">: {{ $val_po_date }}</td>
+                    </tr>
+                    <tr>
+                        <td class="border-right">Delivery Date</td>
+                        <td>: {{ $val_deliv_date ?: '-' }}</td>
                     </tr>
                 </table>
             </td>
-            <td style="width:50%; vertical-align:top; padding-left:16px;">
-                <table class="info-table">
+            <td style="width: 50%; padding: 0; border: 1px solid #000; vertical-align: top;">
+                <table class="inner-table">
                     <tr>
-                        <td class="info-label">Kapal</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ $formData['vessel_name'] ?? $upload->vessel_name }}</td>
+                        <td class="border-bottom border-right" style="width: 20%;">Ves</td>
+                        <td class="border-bottom" style="width: 80%;">: {{ $val_vessel ?: '-' }}</td>
                     </tr>
                     <tr>
-                        <td class="info-label">Voyage</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ $formData['voyage'] ?? $upload->voyage }}</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    {{-- Vendor info --}}
-    <table class="box-table" style="margin-bottom:12px;">
-        <tr>
-            <th colspan="2">Kepada Yth. (Vendor / Supplier)</th>
-        </tr>
-        <tr>
-            <td class="box-half box-divider">
-                <table class="info-table">
-                    <tr>
-                        <td class="info-label" style="font-size:10px;">Nama Vendor</td>
-                        <td class="info-sep">:</td>
-                        <td style="font-weight:600;">{{ $formData['vendor_name'] ?? $supplierName }}</td>
+                        <td class="border-bottom border-right">ETB</td>
+                        <td class="border-bottom">: {{ $val_etb ?: '-' }}</td>
                     </tr>
                     <tr>
-                        <td class="info-label" style="font-size:10px;">Contact Person</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ $formData['vendor_contact_name'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label" style="font-size:10px;">Alamat</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ $formData['vendor_address'] ?? '-' }}</td>
-                    </tr>
-                </table>
-            </td>
-            <td class="box-half">
-                <table class="info-table">
-                    <tr>
-                        <td class="info-label" style="font-size:10px;">Telepon</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ $formData['vendor_phone'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label" style="font-size:10px;">Email</td>
-                        <td class="info-sep">:</td>
-                        <td>{{ $formData['vendor_email'] ?? '-' }}</td>
+                        <td class="border-right" style="height: 22px;"></td>
+                        <td></td>
                     </tr>
                 </table>
             </td>
         </tr>
     </table>
 
-    {{-- Deliver To --}}
-    <table style="margin-bottom:12px;">
+    {{-- Vendor & Ship To --}}
+    <table class="excel-table">
         <tr>
-            <td style="width:30%; color:#6b7280;">Kirimkan ke</td>
-            <td style="width:5%;">:</td>
-            <td>{{ $formData['deliver_to'] ?? strtoupper($upload->vessel_name ?? '') }}</td>
+            <td class="bg-yellow text-center" style="width: 50%; padding: 4px;">Vendor</td>
+            <td class="bg-yellow text-center" style="width: 50%; padding: 4px;">Ship To</td>
+        </tr>
+        <tr>
+            <td style="padding: 0; vertical-align: top;">
+                <table class="inner-table">
+                    <tr>
+                        <td style="width: 25%;">Vendor Name</td>
+                        <td style="width: 5%;">:</td>
+                        <td style="width: 70%; font-weight: bold;">{{ $val_vendor_name ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>PIC</td>
+                        <td>:</td>
+                        <td>{{ $val_vendor_pic ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top">Address</td>
+                        <td class="align-top">:</td>
+                        <td>{!! nl2br(e($val_vendor_address ?: '-')) !!}</td>
+                    </tr>
+                    <tr>
+                        <td>Phone</td>
+                        <td>:</td>
+                        <td>{{ $val_vendor_phone ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Email</td>
+                        <td>:</td>
+                        <td>{{ $val_vendor_email ?: '-' }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="padding: 0; vertical-align: top;">
+                <table class="inner-table">
+                    <tr>
+                        <td colspan="3" style="font-weight: bold; background-color: #f9fafb;">
+                            {{ $val_deliver_to ?: '-' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 25%;">PIC</td>
+                        <td style="width: 5%;">:</td>
+                        <td style="width: 70%;">{{ $val_ship_pic ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top">Address</td>
+                        <td class="align-top">:</td>
+                        <td>{!! nl2br(e($val_ship_address ?: '-')) !!}</td>
+                    </tr>
+                    <tr>
+                        <td>Phone</td>
+                        <td>:</td>
+                        <td>{{ $val_ship_phone ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Email</td>
+                        <td>:</td>
+                        <td style="color: blue; text-decoration: underline;">{{ $val_ship_email ?: '-' }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
 
     {{-- Items --}}
-    <table class="items-table" style="margin-bottom:12px;">
+    <table class="excel-table">
         <thead>
-            <tr>
-                <th style="width:5%; text-align:center;">No.</th>
-                <th style="text-align:left;">Nama Barang / Ransum</th>
-                <th style="width:8%; text-align:center;">Satuan</th>
-                <th style="width:8%; text-align:center;">Qty</th>
-                <th style="width:14%; text-align:right;">Harga Satuan (Rp)</th>
-                <th style="width:14%; text-align:right;">Jumlah (Rp)</th>
-                <th style="width:14%; text-align:left;">Keterangan</th>
+            <tr class="bg-yellow">
+                <th class="p-1" style="width: 3%;">N</th>
+                <th class="p-1" style="width: 25%;">Item</th>
+                <th class="p-1" style="width: 20%;">Description</th>
+                <th class="p-1" style="width: 6%;">Qt</th>
+                <th class="p-1" style="width: 8%;">UOM</th>
+                <th class="p-1" style="width: 11%;">Unit Price</th>
+                <th class="p-1" style="width: 12%;">Total Price</th>
+                <th class="p-1" style="width: 15%;">Supplier</th>
             </tr>
         </thead>
         <tbody>
             @foreach($editedItems as $idx => $item)
             <tr>
-                <td style="text-align:center; color:#6b7280; font-size:10px;">{{ $idx + 1 }}</td>
-                <td>{{ $item['nama_ransum'] }}</td>
-                <td style="text-align:center;">{{ $item['satuan'] }}</td>
-                <td style="text-align:center;">{{ $item['qty'] }}</td>
-                <td style="text-align:right;">{{ number_format($item['harga'], 0, ',', '.') }}</td>
-                <td style="text-align:right;">{{ number_format($item['subtotal'], 0, ',', '.') }}</td>
-                <td>{{ $item['keterangan'] }}</td>
+                <td class="p-1 text-center">{{ $idx + 1 }}</td>
+                <td class="p-1">{{ $item['nama_ransum'] }}</td>
+                <td class="p-1">{{ $item['keterangan'] ?? '' }}</td>
+                <td class="p-1 text-center">{{ number_format($item['qty'], 2, '.', '') }}</td>
+                <td class="p-1 text-center">{{ $item['satuan'] }}</td>
+                <td class="p-1 text-right">{{ number_format($item['harga'], 0, ',', '.') }}</td>
+                <td class="p-1 text-right">{{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                <td class="p-1 text-center">{{ $val_vendor_name }}</td>
             </tr>
             @endforeach
         </tbody>
-        <tfoot>
-            <tr style="background:#f9fafb;">
-                <td colspan="5" class="total-label">TOTAL</td>
-                <td class="total-value">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
-                <td></td>
-            </tr>
-        </tfoot>
     </table>
 
-    {{-- Notes --}}
-    @if(!empty($formData['notes']))
-    <table style="margin-bottom:16px;">
+    {{-- Summary & Notes --}}
+    <table class="excel-table" style="margin-bottom: 25px;">
         <tr>
-            <td style="width:15%; color:#6b7280; vertical-align:top;">Catatan</td>
-            <td style="width:5%; vertical-align:top;">:</td>
-            <td>{{ $formData['notes'] }}</td>
+            <td style="width: 50%; vertical-align: top; padding: 0;">
+                <table class="inner-table">
+                    <tr>
+                        <td class="bg-yellow text-center border-bottom" style="padding: 4px;">Note's and Instructions</td>
+                    </tr>
+                    <tr>
+                        <td style="height: 80px; vertical-align: top; padding: 6px; background-color: #fefce8;">
+                            {!! nl2br(e($val_notes)) !!}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 50%; vertical-align: top; padding: 0;">
+                <table class="inner-table">
+                    <tr>
+                        <td class="border-bottom border-right" style="width: 40%; padding-left: 8px;">Sub Total</td>
+                        <td class="border-bottom text-center" style="width: 5%;">:</td>
+                        <td class="border-bottom text-right font-bold" style="width: 55%; padding-right: 8px;">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="border-bottom border-right" style="padding-left: 8px;">Discount %</td>
+                        <td class="border-bottom text-center">:</td>
+                        <td class="border-bottom text-right" style="padding-right: 8px;">{{ $val_discount ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="border-bottom border-right" style="padding-left: 8px;">VAT (11%)</td>
+                        <td class="border-bottom text-center">:</td>
+                        <td class="border-bottom text-right" style="padding-right: 8px;">{{ $val_vat ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="border-bottom border-right" style="padding-left: 8px;">Shipping</td>
+                        <td class="border-bottom text-center">:</td>
+                        <td class="border-bottom text-right" style="padding-right: 8px;">{{ $val_shipping ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="border-right font-bold" style="padding-left: 8px;">TOTAL</td>
+                        <td class="text-center font-bold">:</td>
+                        <td class="text-right font-bold" style="font-size: 14px; padding-right: 8px;">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
-    @endif
 
-    {{-- Signature --}}
-    <table class="sig-table" style="margin-top:24px;">
+    {{-- Signatures --}}
+    <table style="width: 100%; border: none; text-align: center;">
         <tr>
-            <td style="width:33%;">
-                <div style="color:#6b7280; font-size:10px; margin-bottom:4px;">Disiapkan oleh</div>
-                <div style="font-size:11px;">{{ $formData['prepared_by'] ?? '' }}</div>
-                <div class="sig-line">Tanda Tangan</div>
+            <td style="width: 50%; font-weight: bold; border: none; padding-bottom: 60px;">Supplier</td>
+            <td style="width: 50%; font-weight: bold; border: none; padding-bottom: 60px;">Procurement</td>
+        </tr>
+        <tr>
+            <td style="border: none;">
+                <div style="border-bottom: 1px solid #000; display: inline-block; min-width: 220px; padding-bottom: 2px;">
+                    {{ $val_vendor_pic ?: '' }}
+                </div>
             </td>
-            <td style="width:33%;">
-                <div style="color:#6b7280; font-size:10px; margin-bottom:4px;">Disetujui oleh</div>
-                <div style="font-size:11px;">{{ $formData['approved_by'] ?? '' }}</div>
-                <div class="sig-line">Tanda Tangan</div>
-            </td>
-            <td style="width:33%;">
-                <div style="color:#6b7280; font-size:10px; margin-bottom:4px;">Diterima oleh</div>
-                <div class="sig-line">( Vendor )</div>
+            <td style="border: none;">
+                <div style="border-bottom: 1px solid #000; display: inline-block; min-width: 220px; padding-bottom: 2px;">
+                    {{ $val_prepared_by ?: str_replace(' (WH JKT)', '', $val_deliver_to) }}
+                </div>
             </td>
         </tr>
     </table>
 
-    <div class="footer">
-        PT Andalan Maritim Sejahtera &bull; Ship Supply Management &bull; Dicetak: {{ now()->format('d M Y H:i') }}
-    </div>
 </body>
 </html>

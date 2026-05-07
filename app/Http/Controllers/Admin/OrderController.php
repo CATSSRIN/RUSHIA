@@ -54,7 +54,7 @@ class OrderController extends Controller
         return view('admin.orders.po_preview', compact('order', 'vendor', 'items'));
     }
 
-    public function downloadPo(Request $request, Order $order, Vendor $vendor)
+public function downloadPo(Request $request, Order $order, Vendor $vendor)
     {
         $order->load('user', 'ship', 'items.product.vendor');
         $items = $order->items->filter(fn($item) => $item->product?->vendor_id === $vendor->id)->values();
@@ -70,7 +70,23 @@ class OrderController extends Controller
             'deliver_to', 'notes', 'prepared_by', 'approved_by',
         ]);
 
-        // Merge edited item rows from the form — recalculate subtotal server-side
+        // ==========================================
+        // SIMPAN PO NUMBER KE DATABASE SEBAGAI JSON
+        // ==========================================
+        if ($request->filled('po_number')) {
+            $poJson = $order->po_number;
+            $poArray = (is_string($poJson) && str_starts_with(trim($poJson), '{')) ? json_decode($poJson, true) : [];
+            if (!is_array($poArray)) $poArray = [];
+            
+            $vendorSlug = Str::slug($vendor->name);
+            $poArray[$vendorSlug] = $request->input('po_number');
+
+            $order->update([
+                'po_number' => json_encode($poArray)
+            ]);
+        }
+
+        // Merge edited item rows from the form
         $editedItems = [];
         $totalPrice = 0;
         foreach ($items as $idx => $item) {

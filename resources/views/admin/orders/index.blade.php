@@ -59,32 +59,42 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ $order->created_at->format('M d, Y') }}</td>
-                                <td class="px-6 py-4">
-                                    @php
-                                        $vendors = $order->items->map(fn($i) => $i->product?->vendor)->filter()->unique('id')->values();
-                                    @endphp
-                                    @if($vendors->isNotEmpty())
-                                        <div class="flex flex-col gap-1">
-                                            @foreach($vendors as $vendor)
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="text-xs text-gray-600 truncate max-w-[120px]" title="{{ $vendor->name }}">
-                                                        PO-{{ str_pad($order->id,5,'0',STR_PAD_LEFT) }}-{{ $vendor->id }}
-                                                    </span>
-                                                    <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}"
-                                                       class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition whitespace-nowrap">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                                        </svg>
-                                                        Preview
-                                                    </a>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <span class="text-gray-300 text-xs">—</span>
-                                    @endif
-                                </td>
+<td class="px-6 py-4">
+    @php
+        $vendors = $order->items->map(fn($i) => $i->product?->vendor)->filter()->unique('id')->values();
+        $poData = is_string($order->po_number) && str_starts_with(trim($order->po_number), '{') ? json_decode($order->po_number, true) : [];
+    @endphp
+    @if($vendors->isNotEmpty())
+        <div class="flex flex-col gap-2">
+            @foreach($vendors as $vIdx => $vendor)
+                @php
+                    $vSlug = \Illuminate\Support\Str::slug($vendor->name);
+                    $romans = ['01'=>'I','02'=>'II','03'=>'III','04'=>'IV','05'=>'V','06'=>'VI','07'=>'VII','08'=>'VIII','09'=>'IX','10'=>'X','11'=>'XI','12'=>'XII'];
+                    $bulan = $romans[$order->created_at->format('m')];
+                    $tahun = $order->created_at->format('Y');
+                    
+                    // Angka progresif untuk tabel index
+                    $progressiveNumber = $order->id + $vIdx;
+                    $paddedNumber = str_pad($progressiveNumber, 3, '0', STR_PAD_LEFT);
+                    $defaultDisplay = "{$paddedNumber}/AMS-PO-LBJ/{$bulan}/{$tahun}";
+                    
+                    $finalPo = $poData[$vSlug] ?? $defaultDisplay;
+                @endphp
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-semibold text-indigo-700 truncate max-w-[150px]" title="{{ $finalPo }}">
+                        {{ $finalPo }}
+                    </span>
+                    <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}"
+                       class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition whitespace-nowrap">
+                        Preview
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    @else
+        <span class="text-gray-300 text-xs">—</span>
+    @endif
+</td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
                                         <a href="{{ route('admin.orders.show', $order) }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('View') }}</a>
@@ -102,19 +112,19 @@
             {{-- ── Delivery Orders dari Ransum (no_do sudah dibuat) ─────── --}}
             @if($ransumOrders->isNotEmpty())
             <div class="mt-8">
-                <h3 class="text-base font-semibold text-gray-700 mb-3">{{ __('Delivery Orders (DO) – Ransum') }}</h3>
+                <h3 class="text-base font-semibold text-gray-700 mb-3">{{ __('Delivery Orders (DO) & Purchase Orders (PO) – Ransum') }}</h3>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-100">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('No. DO') }}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('No. PO') }}</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Kapal') }}</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Voyage') }}</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Vendor') }}</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Total') }}</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Tgl. Pengiriman') }}</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Dibuat') }}</th>
                                     <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{{ __('Aksi') }}</th>
                                 </tr>
                             </thead>
@@ -122,6 +132,30 @@
                                 @foreach($ransumOrders as $ransum)
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $ransum->no_do }}</td>
+                                    
+                                    {{-- Kolom PO Number yang akan muncul jika sudah disave dari preview --}}
+                                    <td class="px-6 py-4 text-sm font-bold text-indigo-600">
+    @php
+        $poJson = $ransum->po_number;
+        $poData = (is_string($poJson) && str_starts_with(trim($poJson), '{')) ? json_decode($poJson, true) : [];
+    @endphp
+    
+    @if(is_array($poData) && count($poData) > 0)
+        <div class="flex flex-col gap-1">
+            @foreach($poData as $vSlug => $poNum)
+                <div class="text-xs" title="{{ strtoupper(str_replace('-', ' ', $vSlug)) }}">
+                    <span class="text-gray-400 font-normal uppercase">{{ strtoupper(str_replace('-', ' ', $vSlug)) }}:</span> <br>
+                    {{ $poNum }}
+                </div>
+            @endforeach
+        </div>
+    @elseif(!empty($poJson) && !is_array($poData))
+        {{ $poJson }}
+    @else
+        <span class="text-gray-400 font-normal italic text-xs">Belum di-download</span>
+    @endif
+</td>
+                                    
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ $ransum->vessel_name ?? '—' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $ransum->voyage ?? '—' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ $ransum->vendor_name ?? '—' }}</td>
@@ -135,7 +169,6 @@
                                     <td class="px-6 py-4 text-sm text-gray-500">
                                         {{ $ransum->delivery_date ? \Carbon\Carbon::parse($ransum->delivery_date)->format('d M Y') : '—' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $ransum->created_at->format('d M Y') }}</td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex justify-end gap-2">
                                             <a href="{{ route('admin.ransum.po.preview', $ransum->id) }}"
@@ -155,4 +188,3 @@
         </div>
     </div>
 </x-app-layout>
-
