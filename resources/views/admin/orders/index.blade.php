@@ -21,12 +21,28 @@
             'cancelled' => 'Dibatalkan',
         ];
 
+        $summaryTotals = $orders->reduce(function ($carry, $order) {
+            $carry['total']++;
+            $carry['pending'] += $order->status === 'pending' ? 1 : 0;
+            $carry['confirmed'] += $order->status === 'confirmed' ? 1 : 0;
+            $carry['delivered'] += $order->status === 'delivered' ? 1 : 0;
+            $carry['value'] += (float) $order->total_price;
+
+            return $carry;
+        }, [
+            'total' => 0,
+            'pending' => 0,
+            'confirmed' => 0,
+            'delivered' => 0,
+            'value' => 0,
+        ]);
+
         $orderSummary = [
-            ['label' => 'Total Pesanan', 'value' => $orders->count(), 'tone' => 'text-slate-900'],
-            ['label' => 'Menunggu', 'value' => $orders->where('status', 'pending')->count(), 'tone' => 'text-amber-600'],
-            ['label' => 'Diproses', 'value' => $orders->where('status', 'confirmed')->count(), 'tone' => 'text-blue-600'],
-            ['label' => 'Selesai', 'value' => $orders->where('status', 'delivered')->count(), 'tone' => 'text-emerald-600'],
-            ['label' => 'Nilai Pesanan', 'value' => 'Rp ' . number_format((float) $orders->sum('total_price'), 0, ',', '.'), 'tone' => 'text-indigo-600'],
+            ['label' => 'Total Pesanan', 'value' => $summaryTotals['total'], 'tone' => 'text-slate-900'],
+            ['label' => 'Menunggu', 'value' => $summaryTotals['pending'], 'tone' => 'text-amber-600'],
+            ['label' => 'Diproses', 'value' => $summaryTotals['confirmed'], 'tone' => 'text-blue-600'],
+            ['label' => 'Selesai', 'value' => $summaryTotals['delivered'], 'tone' => 'text-emerald-600'],
+            ['label' => 'Nilai Pesanan', 'value' => 'Rp ' . number_format($summaryTotals['value'], 0, ',', '.'), 'tone' => 'text-indigo-600'],
         ];
 
         $formatQuantity = function ($quantity) {
