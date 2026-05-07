@@ -5,16 +5,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Imports\RansumImport;
 use App\Imports\RansumParser;
+use App\Models\Product;
 use App\Models\RansumItem;
 use App\Models\RansumUpload;
+use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RansumController extends Controller
 {
+    private const PRICE_DECIMAL_HEURISTIC_MAX_SCALE = 2;
+
     protected string $uploadDir;
 
     public function __construct()
@@ -375,7 +380,7 @@ class RansumController extends Controller
             'items'           => ['nullable', 'string', 'max:255'],
             'merk_spec'       => ['nullable', 'string', 'max:255'],
             'ppn'             => ['nullable', 'numeric'],
-            'supplier'        => ['nullable', 'string', 'max:255'],
+            'harga_supplier'  => ['nullable', 'string', 'max:255'],
             'harga'           => ['nullable', 'numeric'],
             'satuan'          => ['nullable', 'string', 'max:255'],
             'qty'             => ['nullable', 'numeric'],
@@ -640,5 +645,252 @@ public function terbilang($nilai) {
 
         return redirect()->route('admin.ransum.index')
             ->with('success', __('Upload berhasil dihapus.'));
+    }
+
+    // ------------------------------------------------------------------
+    // PO Preview – items grouped per vendor from product code match (editable)
+    // ------------------------------------------------------------------
+
+    public function poPreview(int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('PO hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
+        $vendorDetailsBySlug = $this->buildVendorDetailsBySlug($grouped);
+        $poPricesByVendor = $this->buildPoPricesByVendor($grouped);
+
+        return view('admin.ransum.po_preview', compact('upload', 'grouped', 'vendorDetailsBySlug', 'poPricesByVendor'));
+    }
+
+    public function downloadRansumPo(Request $request, int $id, string $supplierKey)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('PO hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
+        $vendorDetailsBySlug = $this->buildVendorDetailsBySlug($grouped);
+        $vendorName = collect(array_keys($grouped))->first(function (string $name) use ($supplierKey) {
+            return Str::slug($name) === $supplierKey;
+        });
+
+        if ($vendorName === null) {
+            return redirect()->route('admin.ransum.po.preview', $upload->id)
+                ->with('error', __('Tidak ada item untuk vendor ini.'));
+        }
+
+        $items = collect($grouped[$vendorName])->values();
+        $supplierName = $vendorName;
+        $vendorDetails = $vendorDetailsBySlug[$supplierKey] ?? [
+            'name' => $vendorName,
+            'contact_name' => '',
+            'address' => '',
+            'phone' => '',
+            'email' => '',
+        ];
+
+        $formData = [
+            'po_number' => $request->input('po_number'),
+            'po_date' => $request->input('po_date'),
+            'delivery_date' => $request->input('delivery_date'),
+            'vessel_name' => $request->input('vessel_name'),
+            'voyage' => $request->input('voyage'),
+            'vendor_name' => $request->input('vendor_name', $vendorDetails['name']),
+            'vendor_contact_name' => $request->input('vendor_contact_name', $vendorDetails['contact_name']),
+            'vendor_address' => $request->input('vendor_address', $vendorDetails['address']),
+            'vendor_phone' => $request->input('vendor_phone', $vendorDetails['phone']),
+            'vendor_email' => $request->input('vendor_email', $vendorDetails['email']),
+            'deliver_to' => $request->input('deliver_to'),
+            'notes' => $request->input('notes'),
+            'prepared_by' => $request->input('prepared_by'),
+            'approved_by' => $request->input('approved_by'),
+        ];
+
+        $editedItems = [];
+        $grandTotal  = 0;
+        foreach ($items as $idx => $item) {
+            $qty    = max(0, (float) $request->input("items.{$idx}.qty", $item->qty));
+            $harga  = max(0, (float) $request->input("items.{$idx}.harga", $this->resolvePoUnitPrice($item)));
+            $sub    = $qty * $harga;
+            $grandTotal += $sub;
+            $editedItems[] = [
+                'nama_ransum' => $request->input("items.{$idx}.nama_ransum", $item->nama_ransum),
+                'satuan'      => $request->input("items.{$idx}.satuan", $item->satuan),
+                'qty'         => $qty,
+                'harga'       => $harga,
+                'subtotal'    => $sub,
+                'keterangan'  => $request->input("items.{$idx}.keterangan", ''),
+            ];
+        }
+
+        $pdf = Pdf::loadView('admin.ransum.po_pdf', compact('upload', 'supplierName', 'formData', 'editedItems', 'grandTotal'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'PO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '-' . $supplierKey . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    private function buildVendorDetailsBySlug(array $grouped): array
+    {
+        $vendorNames = array_map(fn ($name) => trim((string) $name), array_keys($grouped));
+
+        $vendorsByName = Vendor::query()
+            ->select(['name', 'contact_name', 'address', 'phone', 'email'])
+            ->whereIn('name', $vendorNames)
+            ->get()
+            ->keyBy(fn (Vendor $vendor) => Str::lower(trim((string) $vendor->name)));
+
+        $details = [];
+        foreach (array_keys($grouped) as $vendorName) {
+            $slug = Str::slug($vendorName);
+            $normalizedVendorName = Str::lower(trim((string) $vendorName));
+            $vendor = $vendorsByName->get($normalizedVendorName);
+            $details[$slug] = [
+                'name' => $vendor?->name ?? $vendorName,
+                'contact_name' => $vendor?->contact_name ?? '',
+                'address' => $vendor?->address ?? '',
+                'phone' => $vendor?->phone ?? '',
+                'email' => $vendor?->email ?? '',
+            ];
+        }
+
+        return $details;
+    }
+
+    private function buildPoPricesByVendor(array $grouped): array
+    {
+        $prices = [];
+        foreach ($grouped as $vendorName => $items) {
+            $vendorSlug = Str::slug($vendorName);
+            foreach ($items as $idx => $item) {
+                $prices[$vendorSlug][$idx] = $this->resolvePoUnitPrice($item);
+            }
+        }
+
+        return $prices;
+    }
+
+    private function resolvePoUnitPrice(RansumItem $item): float
+    {
+        $supplierRaw = $item->harga_supplier;
+        if (is_numeric($supplierRaw)) {
+            return max(0, (float) $supplierRaw);
+        }
+
+        $supplierNormalized = $this->normalizeMoneyString((string) $supplierRaw);
+        if ($supplierNormalized !== null && is_numeric($supplierNormalized)) {
+            return max(0, (float) $supplierNormalized);
+        }
+
+        return max(0, (float) ($item->harga ?? 0));
+    }
+
+    private function normalizeMoneyString(string $value): ?string
+    {
+        $clean = preg_replace('/[^0-9.,]/', '', $value);
+        if ($clean === '') {
+            return null;
+        }
+
+        $commaCount = substr_count($clean, ',');
+        $dotCount = substr_count($clean, '.');
+
+        if ($commaCount > 0 && $dotCount > 0) {
+            $lastComma = strrpos($clean, ',');
+            $lastDot = strrpos($clean, '.');
+            $decimalSeparator = $lastComma > $lastDot ? ',' : '.';
+            $thousandSeparator = $decimalSeparator === ',' ? '.' : ',';
+
+            $normalized = str_replace($thousandSeparator, '', $clean);
+            if ($decimalSeparator === ',') {
+                $normalized = str_replace(',', '.', $normalized);
+            }
+
+            return $normalized;
+        }
+
+        if ($commaCount > 0) {
+            if ($commaCount === 1) {
+                $parts = explode(',', $clean);
+                // Heuristic: treat single comma with up to 2 trailing digits as decimal comma (e.g. "10,50"),
+                // and otherwise as thousand separator (e.g. "1,000").
+                if (count($parts) === 2 && strlen($parts[1]) <= self::PRICE_DECIMAL_HEURISTIC_MAX_SCALE) {
+                    return $parts[0] . '.' . $parts[1];
+                }
+            }
+
+            return str_replace(',', '', $clean);
+        }
+
+        if ($dotCount > 1) {
+            return str_replace('.', '', $clean);
+        }
+
+        return $clean;
+    }
+
+    private function groupItemsByVendorFromProductCode($items): array
+    {
+        $codes = collect($items)
+            ->pluck('kode_item')
+            ->map(fn ($code) => $this->normalizeProductCode($code))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $productsByCode = collect();
+        if ($codes->isNotEmpty()) {
+            $productsByCode = Product::with('vendor:id,name')
+                ->whereIn('kode', $codes)
+                ->get()
+                ->keyBy(fn (Product $product) => $this->normalizeProductCode($product->kode));
+        }
+
+        $grouped = [];
+        foreach ($items as $item) {
+            $vendorName = $this->resolveVendorNameFromCode($item->kode_item, $productsByCode);
+            $grouped[$vendorName][] = $item;
+        }
+
+        ksort($grouped);
+
+        return $grouped;
+    }
+
+    private function resolveVendorNameFromCode(?string $kodeItem, $productsByCode): string
+    {
+        $normalizedCode = $this->normalizeProductCode($kodeItem);
+        if ($normalizedCode === null) {
+            return 'UNKNOWN';
+        }
+
+        $product = $productsByCode->get($normalizedCode);
+        if ($product === null || $product->vendor === null) {
+            return 'UNKNOWN';
+        }
+
+        $vendorName = trim((string) $product->vendor->name);
+
+        return $vendorName !== '' ? $vendorName : 'UNKNOWN';
+    }
+
+    private function normalizeProductCode(?string $code): ?string
+    {
+        if ($code === null) {
+            return null;
+        }
+
+        $normalized = strtoupper(trim((string) $code));
+
+        return $normalized !== '' ? $normalized : null;
     }
 }
