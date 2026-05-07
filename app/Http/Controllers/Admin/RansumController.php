@@ -751,6 +751,10 @@ public function terbilang($nilai) {
 
     private function normalizeProductCode(?string $code): ?string
     {
+        if ($code === null) {
+            return null;
+        }
+
         $normalized = strtoupper(trim((string) $code));
 
         return $normalized !== '' ? $normalized : null;
