@@ -55,9 +55,10 @@
                 @foreach($grouped as $vendor => $items)
                 @php
                     $vendorSlug = Illuminate\Support\Str::slug($vendor);
+                    $vendorDetails = $vendorDetailsBySlug[$vendorSlug] ?? null;
                     $grandTotal = 0;
                     foreach ($items as $item) {
-                        $grandTotal += ($item->harga ?? 0) * ($item->qty ?? 0);
+                        $grandTotal += (($item->po_harga ?? 0) * ($item->qty ?? 0));
                     }
                 @endphp
                 <div id="panel-{{ $vendorSlug }}" class="vendor-panel {{ !$loop->first ? 'hidden' : '' }}">
@@ -137,12 +138,17 @@
                                             <tr>
                                                 <td style="padding:2px 0; width:35%; color:#6b7280; font-size:11px;">Nama Vendor</td>
                                                 <td style="padding:2px; width:5%; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_name" value="{{ $vendor }}" class="po-input" style="width:100%; font-weight:600;"></td>
+                                                <td><input type="text" name="vendor_name" value="{{ $vendorDetails['name'] ?? $vendor }}" class="po-input" style="width:100%; font-weight:600;"></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:2px 0; color:#6b7280; font-size:11px;">Contact Person</td>
+                                                <td style="padding:2px; font-size:11px;">:</td>
+                                                <td><input type="text" name="vendor_contact_name" value="{{ $vendorDetails['contact_name'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding:2px 0; color:#6b7280; font-size:11px;">Alamat</td>
                                                 <td style="padding:2px; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_address" value="" class="po-input" style="width:100%;" placeholder="—"></td>
+                                                <td><input type="text" name="vendor_address" value="{{ $vendorDetails['address'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
                                             </tr>
                                         </table>
                                     </td>
@@ -151,12 +157,12 @@
                                             <tr>
                                                 <td style="padding:2px 0; width:35%; color:#6b7280; font-size:11px;">Telepon</td>
                                                 <td style="padding:2px; width:5%; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_phone" value="" class="po-input" style="width:100%;" placeholder="—"></td>
+                                                <td><input type="text" name="vendor_phone" value="{{ $vendorDetails['phone'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding:2px 0; color:#6b7280; font-size:11px;">Email</td>
                                                 <td style="padding:2px; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_email" value="" class="po-input" style="width:100%;" placeholder="—"></td>
+                                                <td><input type="text" name="vendor_email" value="{{ $vendorDetails['email'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
                                             </tr>
                                         </table>
                                     </td>
@@ -189,7 +195,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach($items as $idx => $item)
-                                    @php $sub = ($item->harga ?? 0) * ($item->qty ?? 0); @endphp
+                                    @php $sub = (($item->po_harga ?? 0) * ($item->qty ?? 0)); @endphp
                                     <tr style="border-bottom:1px solid #e5e7eb;" class="item-row-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-index="{{ $idx }}">
                                         <td style="padding:6px 10px; border:1px solid #e5e7eb; text-align:center; vertical-align:middle; color:#6b7280; font-size:11px;">{{ $idx + 1 }}</td>
                                         <td style="padding:4px 6px; border:1px solid #e5e7eb; vertical-align:middle;">
@@ -203,7 +209,7 @@
                                                    class="po-input text-center item-qty-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-idx="{{ $idx }}" style="width:60px;">
                                         </td>
                                         <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:right; vertical-align:middle;">
-                                            <input type="number" name="items[{{ $idx }}][harga]" value="{{ $item->harga }}" min="0" step="1"
+                                            <input type="number" name="items[{{ $idx }}][harga]" value="{{ $item->po_harga ?? 0 }}" min="0" step="1"
                                                    class="po-input text-right item-price-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-idx="{{ $idx }}" style="width:110px;">
                                         </td>
                                         <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:right; vertical-align:middle;">

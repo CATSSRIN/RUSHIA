@@ -8,6 +8,7 @@ use App\Imports\RansumParser;
 use App\Models\Product;
 use App\Models\RansumItem;
 use App\Models\RansumUpload;
+use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -647,8 +648,15 @@ public function terbilang($nilai) {
         }
 
         $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
+        $vendorDetailsBySlug = $this->buildVendorDetailsBySlug($grouped);
 
-        return view('admin.ransum.po_preview', compact('upload', 'grouped'));
+        foreach ($grouped as $vendorName => $items) {
+            foreach ($items as $item) {
+                $item->setAttribute('po_harga', $this->resolvePoUnitPrice($item));
+            }
+        }
+
+        return view('admin.ransum.po_preview', compact('upload', 'grouped', 'vendorDetailsBySlug'));
     }
 
     public function downloadRansumPo(Request $request, int $id, string $supplierKey)
@@ -661,6 +669,7 @@ public function terbilang($nilai) {
         }
 
         $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
+        $vendorDetailsBySlug = $this->buildVendorDetailsBySlug($grouped);
         $vendorName = collect(array_keys($grouped))->first(function (string $name) use ($supplierKey) {
             return Str::slug($name) === $supplierKey;
         });
@@ -672,18 +681,36 @@ public function terbilang($nilai) {
 
         $items = collect($grouped[$vendorName])->values();
         $supplierName = $vendorName;
+        $vendorDetails = $vendorDetailsBySlug[$supplierKey] ?? [
+            'name' => $vendorName,
+            'contact_name' => '',
+            'address' => '',
+            'phone' => '',
+            'email' => '',
+        ];
 
-        $formData = $request->only([
-            'po_number', 'po_date', 'delivery_date', 'vessel_name', 'voyage',
-            'vendor_name', 'vendor_address', 'vendor_phone', 'vendor_email',
-            'deliver_to', 'notes', 'prepared_by', 'approved_by',
-        ]);
+        $formData = [
+            'po_number' => $request->input('po_number'),
+            'po_date' => $request->input('po_date'),
+            'delivery_date' => $request->input('delivery_date'),
+            'vessel_name' => $request->input('vessel_name'),
+            'voyage' => $request->input('voyage'),
+            'vendor_name' => $request->input('vendor_name', $vendorDetails['name']),
+            'vendor_contact_name' => $request->input('vendor_contact_name', $vendorDetails['contact_name']),
+            'vendor_address' => $request->input('vendor_address', $vendorDetails['address']),
+            'vendor_phone' => $request->input('vendor_phone', $vendorDetails['phone']),
+            'vendor_email' => $request->input('vendor_email', $vendorDetails['email']),
+            'deliver_to' => $request->input('deliver_to'),
+            'notes' => $request->input('notes'),
+            'prepared_by' => $request->input('prepared_by'),
+            'approved_by' => $request->input('approved_by'),
+        ];
 
         $editedItems = [];
         $grandTotal  = 0;
         foreach ($items as $idx => $item) {
             $qty    = max(0, (float) $request->input("items.{$idx}.qty", $item->qty));
-            $harga  = max(0, (float) $request->input("items.{$idx}.harga", $item->harga));
+            $harga  = max(0, (float) $request->input("items.{$idx}.harga", $this->resolvePoUnitPrice($item)));
             $sub    = $qty * $harga;
             $grandTotal += $sub;
             $editedItems[] = [
@@ -702,6 +729,80 @@ public function terbilang($nilai) {
         $filename = 'PO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '-' . $supplierKey . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    private function buildVendorDetailsBySlug(array $grouped): array
+    {
+        $vendorsByName = Vendor::query()
+            ->select(['name', 'contact_name', 'address', 'phone', 'email'])
+            ->get()
+            ->keyBy(fn (Vendor $vendor) => Str::lower(trim((string) $vendor->name)));
+
+        $details = [];
+        foreach (array_keys($grouped) as $vendorName) {
+            $slug = Str::slug($vendorName);
+            $vendor = $vendorsByName->get(Str::lower(trim((string) $vendorName)));
+            $details[$slug] = [
+                'name' => $vendor?->name ?? $vendorName,
+                'contact_name' => $vendor?->contact_name ?? '',
+                'address' => $vendor?->address ?? '',
+                'phone' => $vendor?->phone ?? '',
+                'email' => $vendor?->email ?? '',
+            ];
+        }
+
+        return $details;
+    }
+
+    private function resolvePoUnitPrice(RansumItem $item): float
+    {
+        $supplierPrice = $this->parseMoneyToFloat($item->harga_supplier);
+        if ($supplierPrice > 0) {
+            return $supplierPrice;
+        }
+
+        return max(0, $this->parseMoneyToFloat($item->harga));
+    }
+
+    private function parseMoneyToFloat(mixed $value): float
+    {
+        if ($value === null) {
+            return 0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        $normalized = preg_replace('/[^\d,.\-]/', '', (string) $value);
+        if ($normalized === null || $normalized === '') {
+            return 0;
+        }
+
+        $hasComma = str_contains($normalized, ',');
+        $hasDot = str_contains($normalized, '.');
+
+        if ($hasComma && $hasDot) {
+            if (strrpos($normalized, ',') > strrpos($normalized, '.')) {
+                $normalized = str_replace('.', '', $normalized);
+                $normalized = str_replace(',', '.', $normalized);
+            } else {
+                $normalized = str_replace(',', '', $normalized);
+            }
+        } elseif ($hasComma) {
+            $normalized = str_replace('.', '', $normalized);
+            $normalized = str_replace(',', '.', $normalized);
+        } elseif ($hasDot) {
+            $parts = explode('.', $normalized);
+            if (count($parts) > 1) {
+                $lastPart = end($parts);
+                if (strlen((string) $lastPart) === 3) {
+                    $normalized = str_replace('.', '', $normalized);
+                }
+            }
+        }
+
+        return is_numeric($normalized) ? (float) $normalized : 0;
     }
 
     private function groupItemsByVendorFromProductCode($items): array
