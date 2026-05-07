@@ -15,7 +15,7 @@ class RansumItem extends Model
         'items',
         'merk_spec',
         'ppn',
-        'supplier',
+        'harga_supplier',
         'harga',
         'satuan',
         'qty',

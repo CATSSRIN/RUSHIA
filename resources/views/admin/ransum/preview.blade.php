@@ -184,7 +184,7 @@
                                         <td class="px-3 py-2 text-gray-600">{{ $item['merk_spec'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-600">{{ $item['ppn'] !== null ? number_format($item['ppn'], 0, ',', '.') : '-' }}</td>
                                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">
-                                            {{ $item['supplier'] ?? '-' }}
+                                            {{ $item['harga_supplier'] ?? '-' }}
                                         </td>
                                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ $item['satuan'] ?? '-' }}</td>
                                         <td class="px-3 py-2 text-right text-gray-800">{{ $item['qty'] !== null ? number_format($item['qty'], 0, ',', '.') : '-' }}</td>
@@ -409,7 +409,7 @@
 
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">{{ __('Harga Supplier') }}</label>
-                        <input type="text" name="supplier" id="f-supplier"
+                        <input type="text" name="harga_supplier" id="f-harga_supplier"
                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
                     </div>
 
@@ -503,7 +503,7 @@
             document.getElementById('item-form').action = UPDATE_BASE + '/' + itemId;
 
             const fields = ['section','nama_ransum','kode_item','items','merk_spec','ppn',
-                            'supplier','satuan','qty','harga','bkp','ppn_11',
+                            'harga_supplier','satuan','qty','harga','bkp','ppn_11',
                             'ket_remarks','status_received','good_received'];
             fields.forEach(f => {
                 const el = document.getElementById('f-' + f);
@@ -519,7 +519,7 @@
             document.getElementById('item-form').action = STORE_URL;
 
             const fields = ['nama_ransum','kode_item','items','merk_spec','ppn',
-                            'supplier','satuan','qty','harga','bkp','ppn_11',
+                            'harga_supplier','satuan','qty','harga','bkp','ppn_11',
                             'ket_remarks','status_received','good_received'];
             fields.forEach(f => {
                 const el = document.getElementById('f-' + f);

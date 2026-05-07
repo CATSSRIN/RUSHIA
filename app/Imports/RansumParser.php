@@ -26,7 +26,7 @@ namespace App\Imports;
  *   2  items
  *   3  merk_spec
  *   4  ppn
- *   5  supplier
+ *   5  harga_supplier
  *   6  satuan
  *   7  qty  (PEMESANAN / ORDER)
  *   8  harga
@@ -52,7 +52,7 @@ class RansumParser
         'items'           => 2,
         'merk_spec'       => 3,
         'ppn'             => 4,
-        'supplier'        => 5,
+        'harga_supplier'  => 5,
         'satuan'          => 6,
         'qty'             => 7,
         'harga'           => 8,
@@ -314,7 +314,7 @@ class RansumParser
             'items'           => ['items'],
             'merk_spec'       => ['merk/spec', 'merk'],
             'ppn'             => ['ppn'],
-            'supplier'        => ['harga supplier', 'harga sup'],
+            'harga_supplier'  => ['harga supplier', 'harga sup'],
             'satuan'          => ['satuan'],
             'qty'             => ['qty', 'pemesanan'],
             'harga'           => ['harga'],
@@ -363,7 +363,7 @@ class RansumParser
             'items'           => $this->str($row[$c['items']] ?? null),
             'merk_spec'       => $this->str($row[$c['merk_spec']] ?? null),
             'ppn'             => $this->numeric($row[$c['ppn']] ?? null),
-            'supplier'        => $this->str($row[$c['supplier']] ?? null),
+            'harga_supplier'  => $this->str($row[$c['harga_supplier']] ?? null),
             'harga'           => $this->numeric($row[$c['harga']] ?? null),
             'satuan'          => $this->str($row[$c['satuan']] ?? null),
             'qty'             => $this->numeric($row[$c['qty']] ?? null),
