@@ -18,6 +18,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class RansumController extends Controller
 {
+    private const PRICE_DECIMAL_HEURISTIC_MAX_SCALE = 2;
+
     protected string $uploadDir;
 
     public function __construct()
@@ -649,14 +651,9 @@ public function terbilang($nilai) {
 
         $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
         $vendorDetailsBySlug = $this->buildVendorDetailsBySlug($grouped);
+        $poPricesByVendor = $this->buildPoPricesByVendor($grouped);
 
-        foreach ($grouped as $vendorName => $items) {
-            foreach ($items as $item) {
-                $item->setAttribute('po_harga', $this->resolvePoUnitPrice($item));
-            }
-        }
-
-        return view('admin.ransum.po_preview', compact('upload', 'grouped', 'vendorDetailsBySlug'));
+        return view('admin.ransum.po_preview', compact('upload', 'grouped', 'vendorDetailsBySlug', 'poPricesByVendor'));
     }
 
     public function downloadRansumPo(Request $request, int $id, string $supplierKey)
@@ -733,15 +730,19 @@ public function terbilang($nilai) {
 
     private function buildVendorDetailsBySlug(array $grouped): array
     {
+        $vendorNames = array_map(fn ($name) => trim((string) $name), array_keys($grouped));
+
         $vendorsByName = Vendor::query()
             ->select(['name', 'contact_name', 'address', 'phone', 'email'])
+            ->whereIn('name', $vendorNames)
             ->get()
             ->keyBy(fn (Vendor $vendor) => Str::lower(trim((string) $vendor->name)));
 
         $details = [];
         foreach (array_keys($grouped) as $vendorName) {
             $slug = Str::slug($vendorName);
-            $vendor = $vendorsByName->get(Str::lower(trim((string) $vendorName)));
+            $normalizedVendorName = Str::lower(trim((string) $vendorName));
+            $vendor = $vendorsByName->get($normalizedVendorName);
             $details[$slug] = [
                 'name' => $vendor?->name ?? $vendorName,
                 'contact_name' => $vendor?->contact_name ?? '',
@@ -754,55 +755,76 @@ public function terbilang($nilai) {
         return $details;
     }
 
-    private function resolvePoUnitPrice(RansumItem $item): float
+    private function buildPoPricesByVendor(array $grouped): array
     {
-        $supplierPrice = $this->parseMoneyToFloat($item->harga_supplier);
-        if ($supplierPrice > 0) {
-            return $supplierPrice;
+        $prices = [];
+        foreach ($grouped as $vendorName => $items) {
+            $vendorSlug = Str::slug($vendorName);
+            foreach ($items as $idx => $item) {
+                $prices[$vendorSlug][$idx] = $this->resolvePoUnitPrice($item);
+            }
         }
 
-        return max(0, $this->parseMoneyToFloat($item->harga));
+        return $prices;
     }
 
-    private function parseMoneyToFloat(mixed $value): float
+    private function resolvePoUnitPrice(RansumItem $item): float
     {
-        if ($value === null) {
-            return 0;
+        $supplierRaw = $item->harga_supplier;
+        if (is_numeric($supplierRaw)) {
+            return max(0, (float) $supplierRaw);
         }
 
-        if (is_numeric($value)) {
-            return (float) $value;
+        $supplierNormalized = $this->normalizeMoneyString((string) $supplierRaw);
+        if ($supplierNormalized !== null && is_numeric($supplierNormalized)) {
+            return max(0, (float) $supplierNormalized);
         }
 
-        $normalized = preg_replace('/[^\d,.\-]/', '', (string) $value);
-        if ($normalized === null || $normalized === '') {
-            return 0;
+        return max(0, (float) ($item->harga ?? 0));
+    }
+
+    private function normalizeMoneyString(string $value): ?string
+    {
+        $clean = preg_replace('/[^0-9.,]/', '', $value);
+        if ($clean === '') {
+            return null;
         }
 
-        $hasComma = str_contains($normalized, ',');
-        $hasDot = str_contains($normalized, '.');
+        $commaCount = substr_count($clean, ',');
+        $dotCount = substr_count($clean, '.');
 
-        if ($hasComma && $hasDot) {
-            if (strrpos($normalized, ',') > strrpos($normalized, '.')) {
-                $normalized = str_replace('.', '', $normalized);
+        if ($commaCount > 0 && $dotCount > 0) {
+            $lastComma = strrpos($clean, ',');
+            $lastDot = strrpos($clean, '.');
+            $decimalSeparator = $lastComma > $lastDot ? ',' : '.';
+            $thousandSeparator = $decimalSeparator === ',' ? '.' : ',';
+
+            $normalized = str_replace($thousandSeparator, '', $clean);
+            if ($decimalSeparator === ',') {
                 $normalized = str_replace(',', '.', $normalized);
-            } else {
-                $normalized = str_replace(',', '', $normalized);
             }
-        } elseif ($hasComma) {
-            $normalized = str_replace('.', '', $normalized);
-            $normalized = str_replace(',', '.', $normalized);
-        } elseif ($hasDot) {
-            $parts = explode('.', $normalized);
-            if (count($parts) > 1) {
-                $lastPart = end($parts);
-                if (strlen((string) $lastPart) === 3) {
-                    $normalized = str_replace('.', '', $normalized);
+
+            return $normalized;
+        }
+
+        if ($commaCount > 0) {
+            if ($commaCount === 1) {
+                $parts = explode(',', $clean);
+                // Heuristic: treat single comma with up to 2 trailing digits as decimal comma (e.g. "10,50"),
+                // and otherwise as thousand separator (e.g. "1,000").
+                if (count($parts) === 2 && strlen($parts[1]) <= self::PRICE_DECIMAL_HEURISTIC_MAX_SCALE) {
+                    return $parts[0] . '.' . $parts[1];
                 }
             }
+
+            return str_replace(',', '', $clean);
         }
 
-        return is_numeric($normalized) ? (float) $normalized : 0;
+        if ($dotCount > 1) {
+            return str_replace('.', '', $clean);
+        }
+
+        return $clean;
     }
 
     private function groupItemsByVendorFromProductCode($items): array

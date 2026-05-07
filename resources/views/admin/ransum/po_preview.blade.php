@@ -57,8 +57,9 @@
                     $vendorSlug = Illuminate\Support\Str::slug($vendor);
                     $vendorDetails = $vendorDetailsBySlug[$vendorSlug] ?? null;
                     $grandTotal = 0;
-                    foreach ($items as $item) {
-                        $grandTotal += (($item->po_harga ?? 0) * ($item->qty ?? 0));
+                    foreach ($items as $idx => $item) {
+                        $itemPoPrice = $poPricesByVendor[$vendorSlug][$idx] ?? 0;
+                        $grandTotal += ($itemPoPrice * ($item->qty ?? 0));
                     }
                 @endphp
                 <div id="panel-{{ $vendorSlug }}" class="vendor-panel {{ !$loop->first ? 'hidden' : '' }}">
@@ -195,7 +196,10 @@
                                 </thead>
                                 <tbody>
                                     @foreach($items as $idx => $item)
-                                    @php $sub = (($item->po_harga ?? 0) * ($item->qty ?? 0)); @endphp
+                                    @php
+                                        $itemPoPrice = $poPricesByVendor[$vendorSlug][$idx] ?? 0;
+                                        $sub = ($itemPoPrice * ($item->qty ?? 0));
+                                    @endphp
                                     <tr style="border-bottom:1px solid #e5e7eb;" class="item-row-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-index="{{ $idx }}">
                                         <td style="padding:6px 10px; border:1px solid #e5e7eb; text-align:center; vertical-align:middle; color:#6b7280; font-size:11px;">{{ $idx + 1 }}</td>
                                         <td style="padding:4px 6px; border:1px solid #e5e7eb; vertical-align:middle;">
@@ -209,7 +213,7 @@
                                                    class="po-input text-center item-qty-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-idx="{{ $idx }}" style="width:60px;">
                                         </td>
                                         <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:right; vertical-align:middle;">
-                                            <input type="number" name="items[{{ $idx }}][harga]" value="{{ $item->po_harga ?? 0 }}" min="0" step="1"
+                                            <input type="number" name="items[{{ $idx }}][harga]" value="{{ $itemPoPrice }}" min="0" step="1"
                                                    class="po-input text-right item-price-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-idx="{{ $idx }}" style="width:110px;">
                                         </td>
                                         <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:right; vertical-align:middle;">
