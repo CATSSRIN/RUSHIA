@@ -3,30 +3,23 @@
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Purchase Order – {{ $upload->vessel_name ?? $upload->original_filename }}
-                @if($upload->voyage)
-                    <span class="text-gray-400 font-normal text-base">&nbsp;/ {{ $upload->voyage }}</span>
-                @endif
             </h2>
             <a href="{{ route('admin.orders.index') }}" class="text-sm text-gray-500 hover:text-gray-700 flex items-center">← Kembali</a>
         </div>
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             @if(session('success'))
                 <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">{{ session('success') }}</div>
             @endif
-            @if(session('error'))
-                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">{{ session('error') }}</div>
-            @endif
 
-            {{-- Info bar --}}
             <div class="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg text-sm flex items-center gap-2">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Barang telah dikategorikan per vendor. Semua field dapat diedit. Klik <strong>Download PDF</strong> pada masing-masing vendor untuk mengunduh surat PO.
+                Barang telah dikategorikan per vendor. Anda bisa langsung mengedit kolom seperti format Excel di bawah ini.
             </div>
 
             @if(empty($grouped))
@@ -35,23 +28,16 @@
                 </div>
             @else
                 {{-- Vendor Tabs --}}
-                @php $vendors = array_keys($grouped); $firstVendor = $vendors[0]; @endphp
-
+                @php $vendors = array_keys($grouped); @endphp
                 <div class="mb-4 flex flex-wrap gap-2" id="vendor-tabs">
                     @foreach($vendors as $vendor)
-                        <button
-                            type="button"
-                            onclick="showVendorTab('{{ Illuminate\Support\Str::slug($vendor) }}')"
-                            id="tab-{{ Illuminate\Support\Str::slug($vendor) }}"
-                            class="tab-btn px-4 py-2 text-sm font-medium rounded-lg border transition
-                                {{ $loop->first ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}">
-                            {{ $vendor }}
-                            <span class="ml-1 text-xs opacity-75">({{ count($grouped[$vendor]) }})</span>
+                        <button type="button" onclick="showVendorTab('{{ Illuminate\Support\Str::slug($vendor) }}')" id="tab-{{ Illuminate\Support\Str::slug($vendor) }}"
+                            class="tab-btn px-4 py-2 text-sm font-medium rounded-lg border transition {{ $loop->first ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}">
+                            {{ $vendor }} <span class="ml-1 text-xs opacity-75">({{ count($grouped[$vendor]) }})</span>
                         </button>
                     @endforeach
                 </div>
 
-                {{-- One PO panel per vendor --}}
                 @foreach($grouped as $vendor => $items)
                 @php
                     $vendorSlug = Illuminate\Support\Str::slug($vendor);
@@ -62,226 +48,169 @@
                         $grandTotal += ($itemPoPrice * ($item->qty ?? 0));
                     }
                 @endphp
+                
                 <div id="panel-{{ $vendorSlug }}" class="vendor-panel {{ !$loop->first ? 'hidden' : '' }}">
-                    <form method="POST" action="{{ route('admin.ransum.po.download', [$upload->id, $vendorSlug]) }}" class="po-form">
+                    <form method="POST" action="{{ route('admin.ransum.po.download', [$upload->id, $vendorSlug]) }}" class="po-form" target="_blank">
                         @csrf
+                        <div class="bg-white shadow-sm p-4 overflow-x-auto mb-4 border border-gray-400">
+                            
+                            {{-- EXCEL STYLE WRAPPER --}}
+                            <div style="min-width: 900px; font-family: Arial, sans-serif; font-size: 12px; color: #000;">
+                                
+                                {{-- Header Titles --}}
+                                <div class="flex justify-between font-bold text-lg mb-2 px-1">
+                                    <div>PURCHASE ORDER</div>
+                                    <div>PT ANDALAN MARITIM SEJAHTERA</div>
+                                </div>
 
-                        {{-- PO Document --}}
-                        <div class="bg-white border border-gray-300 shadow-sm rounded-lg p-8 font-sans text-sm text-gray-900 mb-4">
+                                {{-- Info Box --}}
+                                <table class="excel-table w-full mb-2">
+                                    <tr>
+                                        <td class="w-1/2 p-0 align-top border-r-0">
+                                            <table class="w-full h-full border-none">
+                                                <tr><td class="w-32 border-none border-b border-r border-black p-1">PO No.</td><td class="w-4 border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0">
+                                                    
+                                                        @php
+                                                            $romans = ['01'=>'I','02'=>'II','03'=>'III','04'=>'IV','05'=>'V','06'=>'VI','07'=>'VII','08'=>'VIII','09'=>'IX','10'=>'X','11'=>'XI','12'=>'XII'];
+                                                            $romanMonth = $romans[now()->format('m')];
+                                                            $year = now()->format('Y');
+                                                            
+                                                            // Ambil semua vendor untuk menentukan urutan
+                                                            $allVendors = array_keys($grouped);
+                                                            $currentIndex = array_search($vendor, $allVendors); // Dimulai dari 0, 1, 2...
+                                                            
+                                                            // Angka progresif: ID dasar ditambah urutan vendor, lalu jadikan 3 digit
+                                                            $progressiveNumber = $upload->id + $currentIndex;
+                                                            $paddedNumber = str_pad($progressiveNumber, 3, '0', STR_PAD_LEFT);
 
-                            {{-- Header --}}
-                            <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
-                                <tr>
-                                    <td style="vertical-align:top;">
-                                        <div style="font-size:18px; font-weight:bold; color:#1e3a5f;">PT ANDALAN MARITIM SEJAHTERA</div>
-                                        <div style="font-size:11px; color:#6b7280;">Ship Supply Management</div>
-                                    </td>
-                                    <td style="text-align:right; vertical-align:top;">
-                                        <div style="font-size:22px; font-weight:bold; color:#374151; letter-spacing:2px;">PURCHASE ORDER</div>
-                                        <div style="margin-top:4px;">
-                                            <span style="font-size:11px; color:#6b7280;">No. PO:</span>
-                                            <input type="text" name="po_number"
-                                                   value="PO-{{ str_pad($upload->id,5,'0',STR_PAD_LEFT) }}-{{ Illuminate\Support\Str::upper($vendorSlug) }}"
-                                                   class="po-input text-right" style="width:200px; font-weight:600; color:#1e3a5f;">
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+                                                            // Format Akhir: 041/AMS-PO-LBJ/III/2026
+                                                            $defaultPoNumber = "{$paddedNumber}/AMS-PO-LBJ/{$romanMonth}/{$year}";
 
-                            <hr style="border:none; border-top:2px solid #1e3a5f; margin:8px 0 12px;">
+                                                            // Cek apakah admin sudah pernah menyimpannya di database
+                                                            $existingPoData = is_string($upload->po_number) && str_starts_with(trim($upload->po_number), '{') 
+                                                                            ? json_decode($upload->po_number, true) 
+                                                                            : [];
+                                                            $savedPoNumber = $existingPoData[$vendorSlug] ?? $defaultPoNumber;
+                                                        @endphp
 
-                            {{-- Dates & vessel info --}}
-                            <table style="width:100%; border-collapse:collapse; margin-bottom:12px;">
-                                <tr>
-                                    <td style="width:50%; vertical-align:top; padding-right:16px;">
-                                        <table style="width:100%; border-collapse:collapse;">
-                                            <tr>
-                                                <td style="padding:2px 0; width:40%; color:#6b7280;">Tanggal PO</td>
-                                                <td style="padding:2px; width:5%;">:</td>
-                                                <td><input type="date" name="po_date" value="{{ now()->format('Y-m-d') }}" class="po-input" style="width:140px;"></td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding:2px 0; color:#6b7280;">Tanggal Pengiriman</td>
-                                                <td style="padding:2px;">:</td>
-                                                <td><input type="date" name="delivery_date"
-                                                           value="{{ $upload->delivery_date ? \Carbon\Carbon::parse($upload->delivery_date)->format('Y-m-d') : now()->addDays(3)->format('Y-m-d') }}"
-                                                           class="po-input" style="width:140px;"></td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                    <td style="width:50%; vertical-align:top; padding-left:16px;">
-                                        <table style="width:100%; border-collapse:collapse;">
-                                            <tr>
-                                                <td style="padding:2px 0; width:40%; color:#6b7280;">Kapal</td>
-                                                <td style="padding:2px; width:5%;">:</td>
-                                                <td><input type="text" name="vessel_name" value="{{ $upload->vessel_name }}" class="po-input" style="width:160px;"></td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding:2px 0; color:#6b7280;">Voyage</td>
-                                                <td style="padding:2px;">:</td>
-                                                <td><input type="text" name="voyage" value="{{ $upload->voyage }}" class="po-input" style="width:160px;"></td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            {{-- Vendor info --}}
-                            <table style="width:100%; border-collapse:collapse; border:1px solid #d1d5db; margin-bottom:12px;">
-                                <tr>
-                                    <th colspan="2" style="background:#f3f4f6; padding:6px 10px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#6b7280; border-bottom:1px solid #d1d5db;">
-                                        Kepada Yth. (Vendor / Supplier)
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <td style="padding:8px 10px; width:50%; vertical-align:top; border-right:1px solid #d1d5db;">
-                                        <table style="width:100%; border-collapse:collapse;">
-                                            <tr>
-                                                <td style="padding:2px 0; width:35%; color:#6b7280; font-size:11px;">Nama Vendor</td>
-                                                <td style="padding:2px; width:5%; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_name" value="{{ $vendorDetails['name'] ?? $vendor }}" class="po-input" style="width:100%; font-weight:600;"></td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding:2px 0; color:#6b7280; font-size:11px;">Contact Person</td>
-                                                <td style="padding:2px; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_contact_name" value="{{ $vendorDetails['contact_name'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding:2px 0; color:#6b7280; font-size:11px;">Alamat</td>
-                                                <td style="padding:2px; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_address" value="{{ $vendorDetails['address'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                    <td style="padding:8px 10px; width:50%; vertical-align:top;">
-                                        <table style="width:100%; border-collapse:collapse;">
-                                            <tr>
-                                                <td style="padding:2px 0; width:35%; color:#6b7280; font-size:11px;">Telepon</td>
-                                                <td style="padding:2px; width:5%; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_phone" value="{{ $vendorDetails['phone'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding:2px 0; color:#6b7280; font-size:11px;">Email</td>
-                                                <td style="padding:2px; font-size:11px;">:</td>
-                                                <td><input type="text" name="vendor_email" value="{{ $vendorDetails['email'] ?? '' }}" class="po-input" style="width:100%;" placeholder="—"></td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            {{-- Deliver To --}}
-                            <table style="width:100%; border-collapse:collapse; margin-bottom:12px;">
-                                <tr>
-                                    <td style="width:30%; color:#6b7280;">Kirimkan ke</td>
-                                    <td style="width:5%;">:</td>
-                                    <td><input type="text" name="deliver_to"
-                                               value="{{ $upload->deliver_to ?? strtoupper($upload->vessel_name ?? '') }}"
-                                               class="po-input" style="width:280px;"></td>
-                                </tr>
-                            </table>
-
-                            {{-- Items table --}}
-                            <table style="width:100%; border-collapse:collapse; border:1px solid #d1d5db; margin-bottom:12px;">
-                                <thead>
-                                    <tr style="background:#1e3a5f; color:#fff;">
-                                        <th style="padding:8px 10px; text-align:left; font-size:11px; border:1px solid #1e3a5f;">No.</th>
-                                        <th style="padding:8px 10px; text-align:left; font-size:11px; border:1px solid #1e3a5f;">Nama Barang / Ransum</th>
-                                        <th style="padding:8px 10px; text-align:center; font-size:11px; border:1px solid #1e3a5f;">Satuan</th>
-                                        <th style="padding:8px 10px; text-align:center; font-size:11px; border:1px solid #1e3a5f;">Qty</th>
-                                        <th style="padding:8px 10px; text-align:right; font-size:11px; border:1px solid #1e3a5f;">Harga Satuan (Rp)</th>
-                                        <th style="padding:8px 10px; text-align:right; font-size:11px; border:1px solid #1e3a5f;">Jumlah (Rp)</th>
-                                        <th style="padding:8px 10px; text-align:left; font-size:11px; border:1px solid #1e3a5f;">Keterangan</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($items as $idx => $item)
-                                    @php
-                                        $itemPoPrice = $poPricesByVendor[$vendorSlug][$idx] ?? 0;
-                                        $sub = ($itemPoPrice * ($item->qty ?? 0));
-                                    @endphp
-                                    <tr style="border-bottom:1px solid #e5e7eb;" class="item-row-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-index="{{ $idx }}">
-                                        <td style="padding:6px 10px; border:1px solid #e5e7eb; text-align:center; vertical-align:middle; color:#6b7280; font-size:11px;">{{ $idx + 1 }}</td>
-                                        <td style="padding:4px 6px; border:1px solid #e5e7eb; vertical-align:middle;">
-                                            <input type="text" name="items[{{ $idx }}][nama_ransum]" value="{{ $item->nama_ransum }}" class="po-input w-full">
+                                                        <input type="text" name="po_number" value="{{ $savedPoNumber }}" class="excel-input font-bold">
+                                            </td></tr>
+                                                <tr><td class="border-none border-b border-r border-black p-1">Request Date</td><td class="border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0"><input type="date" name="po_date" value="{{ now()->format('Y-m-d') }}" class="excel-input"></td></tr>
+                                                <tr><td class="border-none border-r border-black p-1">Delivery Date</td><td class="border-none text-center p-1">:</td><td class="border-none p-0"><input type="date" name="delivery_date" value="{{ $upload->delivery_date ? \Carbon\Carbon::parse($upload->delivery_date)->format('Y-m-d') : now()->addDays(3)->format('Y-m-d') }}" class="excel-input"></td></tr>
+                                            </table>
                                         </td>
-                                        <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:center; vertical-align:middle;">
-                                            <input type="text" name="items[{{ $idx }}][satuan]" value="{{ $item->satuan }}" class="po-input text-center" style="width:60px;">
-                                        </td>
-                                        <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:center; vertical-align:middle;">
-                                            <input type="number" name="items[{{ $idx }}][qty]" value="{{ $item->qty }}" min="0" step="any"
-                                                   class="po-input text-center item-qty-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-idx="{{ $idx }}" style="width:60px;">
-                                        </td>
-                                        <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:right; vertical-align:middle;">
-                                            <input type="number" name="items[{{ $idx }}][harga]" value="{{ $itemPoPrice }}" min="0" step="1"
-                                                   class="po-input text-right item-price-{{ $vendorSlug }}" data-vendor="{{ $vendorSlug }}" data-idx="{{ $idx }}" style="width:110px;">
-                                        </td>
-                                        <td style="padding:4px 6px; border:1px solid #e5e7eb; text-align:right; vertical-align:middle;">
-                                            <input type="number" name="items[{{ $idx }}][subtotal]" value="{{ $sub }}"
-                                                   class="po-input text-right item-subtotal-{{ $vendorSlug }} bg-gray-50" data-vendor="{{ $vendorSlug }}" data-idx="{{ $idx }}" readonly style="width:110px;">
-                                        </td>
-                                        <td style="padding:4px 6px; border:1px solid #e5e7eb; vertical-align:middle;">
-                                            <input type="text" name="items[{{ $idx }}][keterangan]" value="{{ $item->ket_remarks }}" class="po-input w-full" placeholder="—">
+                                        <td class="w-1/2 p-0 align-top border-l-0">
+                                            <table class="w-full h-full border-none">
+                                                <tr><td class="w-24 border-none border-b border-r border-black p-1">Ves</td><td class="w-4 border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0"><input type="text" name="vessel_name" value="{{ $upload->vessel_name }}" class="excel-input"></td></tr>
+                                                <tr><td class="border-none border-b border-r border-black p-1">ETB</td><td class="border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0"><input type="text" name="etb" value="" placeholder="dd/mm/yyyy hh:mm" class="excel-input"></td></tr>
+                                                <tr><td colspan="3" class="border-none bg-gray-50 h-6"></td></tr>
+                                            </table>
                                         </td>
                                     </tr>
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr style="background:#f9fafb;">
-                                        <td colspan="5" style="padding:8px 10px; text-align:right; font-weight:600; border:1px solid #d1d5db; color:#374151;">TOTAL</td>
-                                        <td style="padding:8px 10px; text-align:right; font-weight:bold; color:#1e3a5f; border:1px solid #d1d5db;" id="grand-total-{{ $vendorSlug }}">
-                                            Rp {{ number_format($grandTotal, 0, ',', '.') }}
-                                        </td>
-                                        <td style="border:1px solid #d1d5db;"></td>
+                                </table>
+
+                                {{-- Vendor & Ship To --}}
+                                <table class="excel-table w-full mb-2">
+                                    <tr>
+                                        <th class="w-1/2 bg-yellow-300 text-center font-bold p-1">Vendor</th>
+                                        <th class="w-1/2 bg-yellow-300 text-center font-bold p-1">Ship To</th>
                                     </tr>
-                                </tfoot>
-                            </table>
+                                    <tr>
+                                        <td class="p-0 align-top border-r-0">
+                                            <table class="w-full border-none">
+                                                <tr><td class="w-24 border-none p-1">Vendor Name</td><td class="w-4 border-none p-1">:</td><td class="border-none p-0"><input type="text" name="vendor_name" value="{{ $vendorDetails['name'] ?? $vendor }}" class="excel-input font-bold"></td></tr>
+                                                <tr><td class="border-none p-1">PIC</td><td class="border-none p-1">:</td><td class="border-none p-0"><input type="text" name="vendor_contact_name" value="{{ $vendorDetails['contact_name'] ?? '' }}" class="excel-input"></td></tr>
+                                                <tr><td class="border-none p-1 align-top">Address</td><td class="border-none p-1 align-top">:</td><td class="border-none p-0"><textarea name="vendor_address" rows="2" class="excel-input resize-none">{{ $vendorDetails['address'] ?? '' }}</textarea></td></tr>
+                                                <tr><td class="border-none p-1">Phone</td><td class="border-none p-1">:</td><td class="border-none p-0"><input type="text" name="vendor_phone" value="{{ $vendorDetails['phone'] ?? '' }}" class="excel-input"></td></tr>
+                                                <tr><td class="border-none p-1">Email</td><td class="border-none p-1">:</td><td class="border-none p-0"><input type="text" name="vendor_email" value="{{ $vendorDetails['email'] ?? '' }}" class="excel-input text-blue-600"></td></tr>
+                                            </table>
+                                        </td>
+                                        <td class="p-0 align-top border-l-0 border-l border-black">
+                                            <table class="w-full border-none">
+                                                <tr><td colspan="3" class="border-none p-0"><input type="text" name="deliver_to" value="PT Andalan Maritim Sejahtera (WH JKT)" class="excel-input font-bold w-full bg-gray-50"></td></tr>
+                                                <tr><td class="w-24 border-none p-1">PIC</td><td class="w-4 border-none p-1">:</td><td class="border-none p-0"><input type="text" name="ship_to_pic" value="IRWINSYAH" class="excel-input"></td></tr>
+                                                <tr><td class="border-none p-1 align-top">Address</td><td class="border-none p-1 align-top">:</td><td class="border-none p-0"><textarea name="ship_to_address" rows="2" class="excel-input resize-none">Pergudangan INKOPAU, Jl. RE Martadinata No. 100 Blok. B03</textarea></td></tr>
+                                                <tr><td class="border-none p-1">Phone</td><td class="border-none p-1">:</td><td class="border-none p-0"><input type="text" name="ship_to_phone" value="+62 857-8211-6756" class="excel-input"></td></tr>
+                                                <tr><td class="border-none p-1">Email</td><td class="border-none p-1">:</td><td class="border-none p-0"><input type="text" name="ship_to_email" value="irwinsyah.razi16@gmail.com" class="excel-input text-blue-600 underline"></td></tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
 
-                            {{-- Notes --}}
-                            <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
-                                <tr>
-                                    <td style="width:15%; color:#6b7280; vertical-align:top; padding-top:4px;">Catatan</td>
-                                    <td style="width:5%; vertical-align:top; padding-top:4px;">:</td>
-                                    <td>
-                                        <textarea name="notes" rows="2" class="po-input" style="width:100%; resize:vertical;"></textarea>
-                                    </td>
-                                </tr>
-                            </table>
+                                {{-- Items --}}
+                                <table class="excel-table w-full mb-2">
+                                    <thead>
+                                        <tr class="bg-yellow-300">
+                                            <th class="w-8 p-1 text-center font-bold">N</th>
+                                            <th class="p-1 text-center font-bold">Item</th>
+                                            <th class="p-1 text-center font-bold">Description</th>
+                                            <th class="w-16 p-1 text-center font-bold">Qt</th>
+                                            <th class="w-20 p-1 text-center font-bold">UOM</th>
+                                            <th class="w-24 p-1 text-center font-bold">Unit Price</th>
+                                            <th class="w-28 p-1 text-center font-bold">Total Price</th>
+                                            <th class="w-40 p-1 text-center font-bold">Supplier</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($items as $idx => $item)
+                                        @php
+                                            $itemPoPrice = $poPricesByVendor[$vendorSlug][$idx] ?? 0;
+                                            $sub = ($itemPoPrice * ($item->qty ?? 0));
+                                        @endphp
+                                        <tr>
+                                            <td class="p-1 text-center">{{ $idx + 1 }}</td>
+                                            <td class="p-0"><input type="text" name="items[{{ $idx }}][nama_ransum]" value="{{ $item->nama_ransum }}" class="excel-input"></td>
+                                            <td class="p-0"><input type="text" name="items[{{ $idx }}][keterangan]" value="{{ $item->ket_remarks }}" class="excel-input"></td>
+                                            <td class="p-0"><input type="number" name="items[{{ $idx }}][qty]" value="{{ $item->qty }}" step="any" class="excel-input text-center item-qty-{{ $vendorSlug }}" data-idx="{{ $idx }}"></td>
+                                            <td class="p-0"><input type="text" name="items[{{ $idx }}][satuan]" value="{{ $item->satuan }}" class="excel-input text-center"></td>
+                                            <td class="p-0"><input type="number" name="items[{{ $idx }}][harga]" value="{{ $itemPoPrice }}" class="excel-input text-right item-price-{{ $vendorSlug }}" data-idx="{{ $idx }}"></td>
+                                            <td class="p-0"><input type="number" name="items[{{ $idx }}][subtotal]" value="{{ $sub }}" class="excel-input text-right item-subtotal-{{ $vendorSlug }} bg-gray-100" readonly></td>
+                                            <td class="p-1 text-center text-sm">{{ $vendor }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
 
-                            {{-- Signature --}}
-                            <table style="width:100%; border-collapse:collapse; margin-top:24px;">
-                                <tr>
-                                    <td style="width:33%; text-align:center; padding:4px;">
-                                        <div style="color:#6b7280; font-size:11px; margin-bottom:4px;">Disiapkan oleh</div>
-                                        <input type="text" name="prepared_by" value="" class="po-input text-center" style="width:160px;" placeholder="Nama & Jabatan">
-                                        <div style="border-top:1px solid #9ca3af; margin-top:40px; padding-top:4px; font-size:11px; color:#6b7280;">Tanda Tangan</div>
-                                    </td>
-                                    <td style="width:33%; text-align:center; padding:4px;">
-                                        <div style="color:#6b7280; font-size:11px; margin-bottom:4px;">Disetujui oleh</div>
-                                        <input type="text" name="approved_by" value="" class="po-input text-center" style="width:160px;" placeholder="Nama & Jabatan">
-                                        <div style="border-top:1px solid #9ca3af; margin-top:40px; padding-top:4px; font-size:11px; color:#6b7280;">Tanda Tangan</div>
-                                    </td>
-                                    <td style="width:33%; text-align:center; padding:4px;">
-                                        <div style="color:#6b7280; font-size:11px; margin-bottom:4px;">Diterima oleh</div>
-                                        <div style="border-top:1px solid #9ca3af; margin-top:64px; padding-top:4px; font-size:11px; color:#6b7280;">( Vendor )</div>
-                                    </td>
-                                </tr>
-                            </table>
+                                {{-- Notes & Summary --}}
+                                <table class="excel-table w-full mb-6">
+                                    <tr>
+                                        <td class="w-1/2 p-0 align-top border-r-0">
+                                            <table class="w-full border-none">
+                                                <tr><td class="bg-yellow-300 font-bold text-center p-1 border-none border-b border-r border-black">Note's and Instructions</td></tr>
+                                                <tr><td class="p-0 border-none border-r border-black"><textarea name="notes" rows="4" class="excel-input w-full resize-none bg-yellow-50"></textarea></td></tr>
+                                            </table>
+                                        </td>
+                                        <td class="w-1/2 p-0 align-top border-l-0">
+                                            <table class="w-full border-none">
+                                                <tr><td class="w-1/2 p-1 border-none border-b border-r border-black pl-2">Sub Total</td><td class="w-4 border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0 text-right"><span class="block p-1 font-bold" id="sub-total-{{ $vendorSlug }}">{{ number_format($grandTotal, 0, '', '') }}</span></td></tr>
+                                                <tr><td class="p-1 border-none border-b border-r border-black pl-2">Discount %</td><td class="border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0"><input type="text" name="discount" class="excel-input text-right"></td></tr>
+                                                <tr><td class="p-1 border-none border-b border-r border-black pl-2">VAT (11%)</td><td class="border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0"><input type="text" name="vat" class="excel-input text-right"></td></tr>
+                                                <tr><td class="p-1 border-none border-b border-r border-black pl-2">Shipping</td><td class="border-none border-b border-black text-center p-1">:</td><td class="border-none border-b border-black p-0"><input type="text" name="shipping" class="excel-input text-right"></td></tr>
+                                                <tr><td class="p-1 border-none border-r border-black font-bold pl-2">TOTAL</td><td class="border-none border-black font-bold text-center p-1">:</td><td class="border-none border-black p-0 text-right"><span class="block p-1 font-bold text-lg" id="grand-total-{{ $vendorSlug }}">{{ number_format($grandTotal, 0, '', '') }}</span></td></tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
 
-                            <hr style="border:none; border-top:1px solid #e5e7eb; margin:16px 0 8px;">
-                            <div style="text-align:center; font-size:10px; color:#9ca3af;">
-                                PT Andalan Maritim Sejahtera &bull; Ship Supply Management &bull; Dicetak: {{ now()->format('d M Y H:i') }}
+                                {{-- Signatures --}}
+                                <div class="flex justify-between mt-8 text-center px-16">
+                                    <div class="w-48">
+                                        <div class="font-bold mb-16">Supplier</div>
+                                        <div class="border-b border-black inline-block min-w-full pb-1"><input type="text" class="text-center outline-none bg-transparent w-full" placeholder="Nama Supplier"></div>
+                                    </div>
+                                    <div class="w-48">
+                                        <div class="font-bold mb-16">Procurement</div>
+                                        <div class="border-b border-black inline-block min-w-full pb-1"><input type="text" name="prepared_by" value="Irwinsyah" class="text-center outline-none bg-transparent w-full"></div>
+                                    </div>
+                                </div>
+
                             </div>
+                            {{-- END EXCEL WRAPPER --}}
 
                         </div>
-                        {{-- END DOCUMENT --}}
 
-                        <div class="flex justify-end gap-3 mb-8">
-                            <button type="submit"
-                                    class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
+                        <div class="flex justify-end mb-8">
+                            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow">
                                 Download PDF – {{ $vendor }}
                             </button>
                         </div>
@@ -294,74 +223,57 @@
     </div>
 
     <style>
-        .po-input {
-            border: none;
-            border-bottom: 1px dashed #9ca3af;
-            background: transparent;
-            outline: none;
-            padding: 1px 4px;
-            font-size: 12px;
-            font-family: inherit;
-            color: inherit;
-            transition: background 0.15s;
+        .excel-table { border-collapse: collapse; }
+        .excel-table th, .excel-table td { border: 1px solid #000; }
+        .excel-input { 
+            width: 100%; border: none; outline: none; background: transparent; 
+            padding: 4px; font-family: inherit; font-size: inherit; color: inherit;
         }
-        .po-input:focus {
-            background: #eff6ff;
-            border-bottom-color: #3b82f6;
-            border-radius: 2px;
-        }
-        .po-input.w-full { width: 100%; }
-        .po-input.text-right { text-align: right; }
-        .po-input.text-center { text-align: center; }
-        .po-input.bg-gray-50 { background: #f9fafb; }
-        textarea.po-input { border: 1px dashed #9ca3af; padding: 4px 6px; border-radius: 4px; }
-        textarea.po-input:focus { border-color: #3b82f6; background: #eff6ff; }
+        .excel-input:focus { background-color: #e0f2fe; }
     </style>
 
     <script>
         function showVendorTab(slug) {
-            // Hide all panels
-            document.querySelectorAll('.vendor-panel').forEach(function(el) {
-                el.classList.add('hidden');
-            });
-            // Deactivate all tab buttons
-            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+            document.querySelectorAll('.vendor-panel').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
                 btn.classList.add('bg-white', 'text-gray-600', 'border-gray-300');
             });
-            // Show selected panel
-            var panel = document.getElementById('panel-' + slug);
+            const panel = document.getElementById('panel-' + slug);
             if (panel) panel.classList.remove('hidden');
-            // Activate tab button
-            var tab = document.getElementById('tab-' + slug);
+            const tab = document.getElementById('tab-' + slug);
             if (tab) {
                 tab.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
                 tab.classList.remove('bg-white', 'text-gray-600', 'border-gray-300');
             }
         }
 
-        // Live subtotal update for each vendor's items
         @foreach($grouped as $vendor => $items)
         @php $vendorSlug = Illuminate\Support\Str::slug($vendor); @endphp
         (function(slug) {
             function updateTotal() {
-                var total = 0;
-                document.querySelectorAll('.item-subtotal-' + slug).forEach(function(el) {
+                let total = 0;
+                document.querySelectorAll('.item-subtotal-' + slug).forEach(el => {
                     total += parseFloat(el.value) || 0;
                 });
-                var display = document.getElementById('grand-total-' + slug);
-                if (display) {
-                    display.textContent = 'Rp ' + total.toLocaleString('id-ID', {minimumFractionDigits: 0});
-                }
+                
+                // Format ribuan
+                let formatted = new Intl.NumberFormat('id-ID').format(total);
+                
+                const subDisplay = document.getElementById('sub-total-' + slug);
+                if (subDisplay) subDisplay.textContent = formatted;
+                
+                const grandDisplay = document.getElementById('grand-total-' + slug);
+                if (grandDisplay) grandDisplay.textContent = formatted;
             }
-            document.querySelectorAll('.item-qty-' + slug + ', .item-price-' + slug).forEach(function(input) {
+            
+            document.querySelectorAll('.item-qty-' + slug + ', .item-price-' + slug).forEach(input => {
                 input.addEventListener('input', function() {
-                    var idx = this.dataset.idx;
-                    var qty = parseFloat(document.querySelector('.item-qty-' + slug + '[data-idx="' + idx + '"]').value) || 0;
-                    var price = parseFloat(document.querySelector('.item-price-' + slug + '[data-idx="' + idx + '"]').value) || 0;
-                    var sub = qty * price;
-                    var subEl = document.querySelector('.item-subtotal-' + slug + '[data-idx="' + idx + '"]');
-                    if (subEl) subEl.value = sub;
+                    const idx = this.dataset.idx;
+                    const qty = parseFloat(document.querySelector('.item-qty-' + slug + '[data-idx="' + idx + '"]').value) || 0;
+                    const price = parseFloat(document.querySelector('.item-price-' + slug + '[data-idx="' + idx + '"]').value) || 0;
+                    const subEl = document.querySelector('.item-subtotal-' + slug + '[data-idx="' + idx + '"]');
+                    if (subEl) subEl.value = qty * price;
                     updateTotal();
                 });
             });

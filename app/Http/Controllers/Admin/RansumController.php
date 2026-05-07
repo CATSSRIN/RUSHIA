@@ -451,9 +451,6 @@ class RansumController extends Controller
         return $pdf->download($filename);
     }
 
-
-
-
     // ------------------------------------------------------------------
     // Invoice Preview (web) & Download (PDF)
     // ------------------------------------------------------------------
@@ -526,39 +523,39 @@ class RansumController extends Controller
     }
 
     private function penyebut($nilai) {
-    $nilai = abs($nilai);
-    $huruf = array("", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas");
-    $temp = "";
-    if ($nilai < 12) {
-        $temp = " ". $huruf[$nilai];
-    } else if ($nilai < 20) {
-        $temp = $this->penyebut($nilai - 10). " Belas";
-    } else if ($nilai < 100) {
-        $temp = $this->penyebut($nilai/10)." Puluh". $this->penyebut($nilai % 10);
-    } else if ($nilai < 200) {
-        $temp = " Seratus" . $this->penyebut($nilai - 100);
-    } else if ($nilai < 1000) {
-        $temp = $this->penyebut($nilai/100) . " Ratus" . $this->penyebut($nilai % 100);
-    } else if ($nilai < 2000) {
-        $temp = " Seribu" . $this->penyebut($nilai - 1000);
-    } else if ($nilai < 1000000) {
-        $temp = $this->penyebut($nilai/1000) . " Ribu" . $this->penyebut($nilai % 1000);
-    } else if ($nilai < 1000000000) {
-        $temp = $this->penyebut($nilai/1000000) . " Juta" . $this->penyebut($nilai % 1000000);
-    } else if ($nilai < 1000000000000) {
-        $temp = $this->penyebut($nilai/1000000000) . " Milyar" . $this->penyebut(fmod($nilai,1000000000));
+        $nilai = abs($nilai);
+        $huruf = array("", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas");
+        $temp = "";
+        if ($nilai < 12) {
+            $temp = " ". $huruf[$nilai];
+        } else if ($nilai < 20) {
+            $temp = $this->penyebut($nilai - 10). " Belas";
+        } else if ($nilai < 100) {
+            $temp = $this->penyebut($nilai/10)." Puluh". $this->penyebut($nilai % 10);
+        } else if ($nilai < 200) {
+            $temp = " Seratus" . $this->penyebut($nilai - 100);
+        } else if ($nilai < 1000) {
+            $temp = $this->penyebut($nilai/100) . " Ratus" . $this->penyebut($nilai % 100);
+        } else if ($nilai < 2000) {
+            $temp = " Seribu" . $this->penyebut($nilai - 1000);
+        } else if ($nilai < 1000000) {
+            $temp = $this->penyebut($nilai/1000) . " Ribu" . $this->penyebut($nilai % 1000);
+        } else if ($nilai < 1000000000) {
+            $temp = $this->penyebut($nilai/1000000) . " Juta" . $this->penyebut($nilai % 1000000);
+        } else if ($nilai < 1000000000000) {
+            $temp = $this->penyebut($nilai/1000000000) . " Milyar" . $this->penyebut(fmod($nilai,1000000000));
+        }
+        return $temp;
     }
-    return $temp;
-}
 
-public function terbilang($nilai) {
-    if($nilai < 0) {
-        $hasil = "Minus ". trim($this->penyebut($nilai));
-    } else {
-        $hasil = trim($this->penyebut($nilai));
+    public function terbilang($nilai) {
+        if($nilai < 0) {
+            $hasil = "Minus ". trim($this->penyebut($nilai));
+        } else {
+            $hasil = trim($this->penyebut($nilai));
+        }
+        return $hasil . " Rupiah";
     }
-    return $hasil . " Rupiah";
-}
 
     // ------------------------------------------------------------------
     // Surat AMS (Provision Request List) Preview & Download
@@ -667,13 +664,28 @@ public function terbilang($nilai) {
         return view('admin.ransum.po_preview', compact('upload', 'grouped', 'vendorDetailsBySlug', 'poPricesByVendor'));
     }
 
-    public function downloadRansumPo(Request $request, int $id, string $supplierKey)
+public function downloadRansumPo(Request $request, int $id, string $supplierKey)
     {
         $upload = RansumUpload::with('items')->findOrFail($id);
 
         if ($upload->status !== 'imported') {
             return redirect()->route('admin.ransum.preview', $upload->id)
                 ->with('error', __('PO hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        // ==========================================
+        // SIMPAN PO NUMBER KE DATABASE SEBAGAI JSON
+        // ==========================================
+        if ($request->filled('po_number')) {
+            $poJson = $upload->po_number;
+            $poArray = (is_string($poJson) && str_starts_with(trim($poJson), '{')) ? json_decode($poJson, true) : [];
+            if (!is_array($poArray)) $poArray = [];
+            
+            $poArray[$supplierKey] = $request->input('po_number');
+
+            $upload->update([
+                'po_number' => json_encode($poArray)
+            ]);
         }
 
         $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
