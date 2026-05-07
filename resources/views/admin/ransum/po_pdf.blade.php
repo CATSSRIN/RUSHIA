@@ -112,6 +112,11 @@
                         <td style="font-weight:600;">{{ $formData['vendor_name'] ?? $supplierName }}</td>
                     </tr>
                     <tr>
+                        <td class="info-label" style="font-size:10px;">Contact Person</td>
+                        <td class="info-sep">:</td>
+                        <td>{{ $formData['vendor_contact_name'] ?? '-' }}</td>
+                    </tr>
+                    <tr>
                         <td class="info-label" style="font-size:10px;">Alamat</td>
                         <td class="info-sep">:</td>
                         <td>{{ $formData['vendor_address'] ?? '-' }}</td>
