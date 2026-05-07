@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Imports\RansumImport;
 use App\Imports\RansumParser;
+use App\Models\Product;
 use App\Models\RansumItem;
 use App\Models\RansumUpload;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -376,7 +377,7 @@ class RansumController extends Controller
             'items'           => ['nullable', 'string', 'max:255'],
             'merk_spec'       => ['nullable', 'string', 'max:255'],
             'ppn'             => ['nullable', 'numeric'],
-            'supplier'        => ['nullable', 'string', 'max:255'],
+            'harga_supplier'  => ['nullable', 'string', 'max:255'],
             'harga'           => ['nullable', 'numeric'],
             'satuan'          => ['nullable', 'string', 'max:255'],
             'qty'             => ['nullable', 'numeric'],
@@ -633,7 +634,7 @@ public function terbilang($nilai) {
     }
 
     // ------------------------------------------------------------------
-    // PO Preview – items grouped per vendor/supplier (editable)
+    // PO Preview – items grouped per vendor from product code match (editable)
     // ------------------------------------------------------------------
 
     public function poPreview(int $id)
@@ -645,15 +646,7 @@ public function terbilang($nilai) {
                 ->with('error', __('PO hanya tersedia untuk data yang sudah diimport.'));
         }
 
-        $grouped = [];
-        foreach ($upload->items as $item) {
-            $sup = trim($item->supplier) ?: 'UNKNOWN';
-            if (!isset($grouped[$sup])) {
-                $grouped[$sup] = [];
-            }
-            $grouped[$sup][] = $item;
-        }
-        ksort($grouped);
+        $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
 
         return view('admin.ransum.po_preview', compact('upload', 'grouped'));
     }
@@ -667,17 +660,18 @@ public function terbilang($nilai) {
                 ->with('error', __('PO hanya tersedia untuk data yang sudah diimport.'));
         }
 
-        $items = $upload->items->filter(function ($item) use ($supplierKey) {
-            $sup = trim($item->supplier) ?: 'UNKNOWN';
-            return Str::slug($sup) === $supplierKey;
-        })->values();
+        $grouped = $this->groupItemsByVendorFromProductCode($upload->items);
+        $vendorName = collect(array_keys($grouped))->first(function (string $name) use ($supplierKey) {
+            return Str::slug($name) === $supplierKey;
+        });
 
-        if ($items->isEmpty()) {
+        if ($vendorName === null) {
             return redirect()->route('admin.ransum.po.preview', $upload->id)
                 ->with('error', __('Tidak ada item untuk vendor ini.'));
         }
 
-        $supplierName = trim($items->first()->supplier) ?: 'UNKNOWN';
+        $items = collect($grouped[$vendorName])->values();
+        $supplierName = $vendorName;
 
         $formData = $request->only([
             'po_number', 'po_date', 'delivery_date', 'vessel_name', 'voyage',
@@ -708,5 +702,54 @@ public function terbilang($nilai) {
         $filename = 'PO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '-' . $supplierKey . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    private function groupItemsByVendorFromProductCode($items): array
+    {
+        $codes = collect($items)
+            ->pluck('kode_item')
+            ->map(fn ($code) => $this->normalizeProductCode($code))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $productsByCode = Product::with('vendor:id,name')
+            ->whereIn('kode', $codes)
+            ->get()
+            ->keyBy(fn (Product $product) => $this->normalizeProductCode($product->kode));
+
+        $grouped = [];
+        foreach ($items as $item) {
+            $vendorName = $this->resolveVendorNameFromCode($item->kode_item, $productsByCode);
+            $grouped[$vendorName][] = $item;
+        }
+
+        ksort($grouped);
+
+        return $grouped;
+    }
+
+    private function resolveVendorNameFromCode(?string $kodeItem, $productsByCode): string
+    {
+        $normalizedCode = $this->normalizeProductCode($kodeItem);
+        if ($normalizedCode === null) {
+            return 'UNKNOWN';
+        }
+
+        $product = $productsByCode->get($normalizedCode);
+        if ($product === null || $product->vendor === null) {
+            return 'UNKNOWN';
+        }
+
+        $vendorName = trim((string) $product->vendor->name);
+
+        return $vendorName !== '' ? $vendorName : 'UNKNOWN';
+    }
+
+    private function normalizeProductCode(?string $code): ?string
+    {
+        $normalized = strtoupper(trim((string) $code));
+
+        return $normalized !== '' ? $normalized : null;
     }
 }
