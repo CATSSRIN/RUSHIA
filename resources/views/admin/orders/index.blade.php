@@ -28,6 +28,14 @@
             ['label' => 'Selesai', 'value' => $orders->where('status', 'delivered')->count(), 'tone' => 'text-emerald-600'],
             ['label' => 'Nilai Pesanan', 'value' => 'Rp ' . number_format((float) $orders->sum('total_price'), 0, ',', '.'), 'tone' => 'text-indigo-600'],
         ];
+
+        $formatQuantity = function ($quantity) {
+            $value = (float) $quantity;
+
+            return fmod($value, 1.0) === 0.0
+                ? number_format($value, 0, ',', '.')
+                : number_format($value, 2, ',', '.');
+        };
     @endphp
 
     <div class="py-8">
@@ -100,7 +108,7 @@
                                     <div class="grid gap-4 sm:grid-cols-2">
                                         <div class="rounded-xl bg-slate-50 p-4">
                                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Pesanan</p>
-                                            <p class="mt-2 text-lg font-semibold text-slate-900">Rp {{ number_format((float) $order->total_price, 0, ',', '.') }}</p>
+                                            <p class="mt-2 text-lg font-semibold text-slate-900">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
                                         </div>
                                         <div class="rounded-xl bg-slate-50 p-4">
                                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Jadwal Pickup</p>
@@ -134,7 +142,7 @@
                                                         <p class="text-xs text-gray-400">{{ $item->product?->vendor?->name ?? 'Tanpa vendor' }}</p>
                                                     </div>
                                                     <div class="text-right">
-                                                        <p class="text-sm font-semibold text-gray-900">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, ',', '.'), '0'), ',') }} {{ $item->product?->unit ?? '' }}</p>
+                                                        <p class="text-sm font-semibold text-gray-900">{{ $formatQuantity($item->quantity) }} {{ $item->product?->unit ?? '' }}</p>
                                                         <p class="text-xs text-gray-400">Rp {{ number_format((float) $item->subtotal, 0, ',', '.') }}</p>
                                                     </div>
                                                 </div>
@@ -161,7 +169,7 @@
                                                 $romans = ['01' => 'I', '02' => 'II', '03' => 'III', '04' => 'IV', '05' => 'V', '06' => 'VI', '07' => 'VII', '08' => 'VIII', '09' => 'IX', '10' => 'X', '11' => 'XI', '12' => 'XII'];
                                                 $monthRoman = $romans[$order->created_at->format('m')];
                                                 $year = $order->created_at->format('Y');
-                                                $progressiveNumber = str_pad((string) ($order->id + $vIdx), 3, '0', STR_PAD_LEFT);
+                                                $progressiveNumber = str_pad($order->id + $vIdx, 3, '0', STR_PAD_LEFT);
                                                 $defaultPoNumber = "{$progressiveNumber}/AMS-PO-LBJ/{$monthRoman}/{$year}";
                                                 $poNumber = $poData[$vendorSlug] ?? $defaultPoNumber;
                                             @endphp
