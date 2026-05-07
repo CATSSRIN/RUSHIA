@@ -27,25 +27,28 @@ class AppServiceProvider extends ServiceProvider
             $adminPoList = collect();
 
             if (Auth::check() && Auth::user()->is_admin) {
+                $formatSupplierLabel = static fn ($supplierSlug) => Str::upper(Str::replace('-', ' ', (string) $supplierSlug));
+
                 $uploads = RansumUpload::query()
                     ->whereNotNull('po_number')
                     ->where('po_number', '!=', '')
                     ->orderByDesc('created_at')
-                    ->take(10)
+                    ->take(20)
                     ->get(['id', 'vessel_name', 'voyage', 'no_do', 'po_number']);
 
                 $adminPoList = $uploads
-                    ->flatMap(function (RansumUpload $upload) {
+                    ->flatMap(function (RansumUpload $upload) use ($formatSupplierLabel) {
                         $rawPo = is_string($upload->po_number) ? trim($upload->po_number) : '';
-                        $poData = str_starts_with($rawPo, '{') ? json_decode($rawPo, true) : null;
+                        $decodedPo = str_starts_with($rawPo, '{') ? json_decode($rawPo, true) : null;
+                        $poData = (is_array($decodedPo) && json_last_error() === JSON_ERROR_NONE) ? $decodedPo : null;
 
                         if (is_array($poData) && count($poData) > 0) {
-                            return collect($poData)->map(function ($poNumber, $supplierSlug) use ($upload) {
+                            return collect($poData)->map(function ($poNumber, $supplierSlug) use ($upload, $formatSupplierLabel) {
                                 return [
                                     'title' => $upload->vessel_name ?: ('Ransum #' . $upload->id),
                                     'subtitle' => trim(collect([
                                         $upload->no_do ? ('DO: ' . $upload->no_do) : null,
-                                        strtoupper(str_replace('-', ' ', (string) $supplierSlug)),
+                                        $formatSupplierLabel($supplierSlug),
                                     ])->filter()->implode(' • ')),
                                     'po_number' => (string) $poNumber,
                                     'url' => route('admin.ransum.po.preview', $upload->id),
