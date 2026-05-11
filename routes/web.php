@@ -93,6 +93,7 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}/status/{status}', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
+    Route::get('orders/{order}/hasil', [AdminOrderController::class, 'downloadTotalSheet'])->name('orders.total-sheet');
     Route::get('orders/{order}/invoice', [AdminOrderController::class, 'downloadInvoice'])->name('orders.invoice');
     Route::get('orders/{order}/po/{vendor}', [AdminOrderController::class, 'poPreview'])->name('orders.po.preview');
     Route::post('orders/{order}/po/{vendor}/download', [AdminOrderController::class, 'downloadPo'])->name('orders.po.download');

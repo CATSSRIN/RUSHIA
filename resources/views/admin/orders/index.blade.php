@@ -98,6 +98,7 @@
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
                                         <a href="{{ route('admin.orders.show', $order) }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('View') }}</a>
+                                        <a href="{{ route('admin.orders.total-sheet', $order) }}" class="text-amber-600 hover:text-amber-800 text-sm font-medium">Hasil</a>
                                         <a href="{{ route('admin.orders.invoice', $order) }}" class="text-green-600 hover:text-green-800 text-sm font-medium">{{ __('PDF') }}</a>
                                     </div>
                                 </td>

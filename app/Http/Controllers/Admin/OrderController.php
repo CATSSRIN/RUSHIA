@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\OrderTotalSheetExport;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\RansumUpload;
@@ -9,6 +10,7 @@ use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class OrderController extends Controller
 {
@@ -39,6 +41,16 @@ class OrderController extends Controller
         $order->load('user', 'ship', 'items.product.vendor');
         $pdf = Pdf::loadView('admin.orders.invoice', compact('order'));
         return $pdf->download('invoice-order-' . $order->id . '.pdf');
+    }
+
+    public function downloadTotalSheet(Order $order)
+    {
+        $order->load('user', 'ship', 'items.product.vendor');
+
+        return Excel::download(
+            new OrderTotalSheetExport($order),
+            'hasil-total-harga-order-' . str_pad((string) $order->id, 5, '0', STR_PAD_LEFT) . '.xlsx'
+        );
     }
 
     public function poPreview(Order $order, Vendor $vendor)
