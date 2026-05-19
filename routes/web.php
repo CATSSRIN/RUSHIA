@@ -85,6 +85,7 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::post('ransum/{id}/do/download', [RansumController::class, 'downloadDo'])->name('ransum.do.download');
     Route::get('ransum/{id}/ams', [RansumController::class, 'amsPreview'])->name('ransum.ams.preview');
     Route::post('ransum/{id}/ams/download', [RansumController::class, 'downloadAms'])->name('ransum.ams.download');
+    Route::get('ransum/{id}/total', [RansumController::class, 'totalPreview'])->name('ransum.total.preview');
     Route::get('ransum/{id}/po', [RansumController::class, 'poPreview'])->name('ransum.po.preview');
     Route::post('ransum/{id}/po/{supplierKey}/download', [RansumController::class, 'downloadRansumPo'])->name('ransum.po.download');
 

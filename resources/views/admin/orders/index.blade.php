@@ -172,6 +172,8 @@
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex justify-end gap-2">
+                                            <a href="{{ route('admin.ransum.total.preview', $ransum->id) }}"
+                                               class="text-amber-600 hover:text-amber-800 text-sm font-medium">{{ __('Total') }}</a>
                                             <a href="{{ route('admin.ransum.po.preview', $ransum->id) }}"
                                                class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('PO') }}</a>
                                             <a href="{{ route('admin.ransum.preview', $ransum->id) }}"
