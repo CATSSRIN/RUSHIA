@@ -470,6 +470,11 @@ class RansumController extends Controller
                 ->with('error', __('Silakan buat Delivery Order (DO) terlebih dahulu sebelum membuat Invoice.'));
         }
 
+                // Warning: Tampilkan peringatan jika DO belum dibuat
+        if (empty($upload->no_do)) {
+            session()->flash('warning', __('Peringatan: Delivery Order (DO) belum dibuat. Anda tidak dapat mendownload Invoice sebelum DO diterbitkan.'));
+        }
+
         $grouped = [];
         foreach ($upload->items as $item) {
             $sec = $item->section ?? 'UNKNOWN';
@@ -490,6 +495,12 @@ class RansumController extends Controller
         if ($upload->status !== 'imported') {
             return redirect()->route('admin.ransum.preview', $upload->id)
                 ->with('error', __('Invoice hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+                // Validasi: DO harus dibuat terlebih dahulu sebelum download invoice
+        if (empty($upload->no_do)) {
+            return redirect()->route('ransum.invoice', $upload->id)
+                ->with('error', __('Delivery Order (DO) harus dibuat terlebih dahulu sebelum mendownload Invoice.'));
         }
 
         $grouped = [];
