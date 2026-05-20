@@ -167,7 +167,7 @@
                         if (!previewContainer) {
                             event.preventDefault();
                             console.error('Total preview container not found.');
-                            alert('Gagal menyiapkan PDF. Silakan refresh halaman lalu coba lagi.');
+                            alert('Gagal menyiapkan PDF. Silakan muat ulang halaman lalu coba lagi.');
                             return;
                         }
 
