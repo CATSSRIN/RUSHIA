@@ -166,6 +166,8 @@
                         const previewContainer = document.getElementById('total-preview-content');
                         if (!previewContainer) {
                             event.preventDefault();
+                            console.error('Total preview container not found.');
+                            alert('Gagal menyiapkan PDF. Silakan refresh halaman lalu coba lagi.');
                             return;
                         }
 
