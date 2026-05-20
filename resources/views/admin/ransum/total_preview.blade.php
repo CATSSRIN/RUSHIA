@@ -164,7 +164,10 @@
                     
                     function prepareTotalPdfContent(event) {
                         const previewContainer = document.getElementById('total-preview-content');
-                        if (!previewContainer) return;
+                        if (!previewContainer) {
+                            event.preventDefault();
+                            return;
+                        }
 
                         const container = previewContainer.cloneNode(true);
                         const formBlock = container.querySelector('#pdfForm');
