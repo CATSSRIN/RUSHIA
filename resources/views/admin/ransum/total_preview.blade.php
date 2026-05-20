@@ -167,7 +167,7 @@
                         if (!previewContainer) {
                             event.preventDefault();
                             console.error('Total preview container not found.');
-                            alert('Gagal menyiapkan PDF. Silakan muat ulang halaman lalu coba lagi.');
+                            showPdfError('Gagal menyiapkan PDF. Silakan muat ulang halaman lalu coba lagi.');
                             return;
                         }
 
@@ -176,6 +176,21 @@
                         if (formBlock) formBlock.remove();
 
                         document.getElementById('html_content').value = container.innerHTML;
+                    }
+
+                    function showPdfError(message) {
+                        const actionButtons = document.getElementById('action-buttons');
+                        if (!actionButtons) return;
+
+                        let errorElement = document.getElementById('pdf-error-message');
+                        if (!errorElement) {
+                            errorElement = document.createElement('p');
+                            errorElement.id = 'pdf-error-message';
+                            errorElement.className = 'mt-2 text-sm text-red-600 text-right';
+                            actionButtons.insertAdjacentElement('afterend', errorElement);
+                        }
+
+                        errorElement.textContent = message;
                     }
                 </script>
             </div>
