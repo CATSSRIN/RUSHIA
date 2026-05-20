@@ -17,7 +17,7 @@
     <div class="py-8">
         <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto">
             
-            <div class="bg-white p-6 shadow-sm border border-gray-200" style="min-width: 1200px;">
+            <div class="bg-white p-6 shadow-sm border border-gray-200" style="min-width: 1200px;" contenteditable="true">
                 
                 {{-- Top Header AMS --}}
                 <div style="background-color: #d1b3ff; text-align: center; font-weight: bold; font-size: 16px; padding: 4px; border: 1px solid black;">
@@ -26,7 +26,7 @@
                 
                 {{-- Info Section --}}
                 <div style="font-weight: bold; font-size: 14px; margin-top: 8px; margin-bottom: 8px;">
-                    <div style="text-transform: uppercase;">{{ $upload->vessel_name ?? 'UNKNOWN' }} ({{ $upload->jumlah_hari_pensupplaian ?? '-' }} Hari)</div>
+                    <div id="vessel-title" style="text-transform: uppercase;">{{ $upload->vessel_name ?? 'UNKNOWN' }} ({{ $upload->jumlah_hari_pensupplaian ?? '-' }} Hari)</div>
                     <div>ETB : {{ $upload->eta ?? '-' }}</div>
                     <div>ETD : {{ $upload->date_end ?? '-' }}</div>
                 </div>
@@ -125,14 +125,24 @@
                 </table>
                 
                 {{-- Print Button --}}
-                <div class="mt-6 flex justify-end print:hidden">
-                    <button onclick="window.print()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-sm inline-flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        Print / Save as PDF
-                    </button>
-                </div>
+                <form method="POST" action="{{ route('admin.ransum.total.download', $upload->id) }}" id="pdfForm">
+                    @csrf
+                    <input type="hidden" name="html_content" id="html_content">
+                    <div class="mt-6 flex justify-end gap-3 print:hidden" contenteditable="false" id="action-buttons">
+                        <button type="button" onclick="printDocument()" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold text-sm inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Print Browser
+                        </button>
+                        <button type="button" onclick="downloadBackendPdf()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-sm inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download PDF
+                        </button>
+                    </div>
+                </form>
                 
                 <style>
                     @media print {
@@ -143,6 +153,25 @@
                     }
                 </style>
                 
+                <script>
+                    function printDocument() {
+                        const originalTitle = document.title;
+                        const vesselTitle = document.getElementById('vessel-title').innerText.trim().replace(/[^a-zA-Z0-9 ()-]/g, '');
+                        document.title = "Total Ransum " + vesselTitle;
+                        window.print();
+                        document.title = originalTitle;
+                    }
+                    
+                    function downloadBackendPdf() {
+                        let container = document.querySelector('.bg-white.p-6').cloneNode(true);
+                        // Remove the action buttons form block from HTML
+                        let formBlock = container.querySelector('#pdfForm');
+                        if(formBlock) formBlock.remove();
+                        
+                        document.getElementById('html_content').value = container.innerHTML;
+                        document.getElementById('pdfForm').submit();
+                    }
+                </script>
             </div>
         </div>
     </div>

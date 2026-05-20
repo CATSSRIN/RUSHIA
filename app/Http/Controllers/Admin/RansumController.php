@@ -706,6 +706,25 @@ class RansumController extends Controller
         return view('admin.ransum.total_preview', compact('upload', 'grouped', 'grandTotalBeli', 'grandTotalJual', 'grandTotalProfit'));
     }
 
+    public function downloadTotalPdf(Request $request, int $id)
+    {
+        $upload = RansumUpload::findOrFail($id);
+        
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Total hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $htmlContent = $request->input('html_content');
+
+        $pdf = Pdf::loadView('admin.ransum.total_pdf', compact('upload', 'htmlContent'))
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'Total-Ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
     // ------------------------------------------------------------------
     // PO Preview – items grouped per vendor from product code match (editable)
     // ------------------------------------------------------------------
