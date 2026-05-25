@@ -17,8 +17,10 @@
     <div class="py-8">
         <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto">
             
-            <div class="bg-white p-6 shadow-sm border border-gray-200" style="min-width: 1200px;" contenteditable="true">
+            <div class="bg-white p-6 shadow-sm border border-gray-200" style="min-width: 1200px;">
                 
+                {{-- Printable Area --}}
+                <div id="printable-area" contenteditable="true" class="outline-none">
                 {{-- Top Header AMS --}}
                 <div style="background-color: #d1b3ff; text-align: center; font-weight: bold; font-size: 16px; padding: 4px; border: 1px solid black;">
                     AMS
@@ -123,6 +125,7 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
                 
                 {{-- Print Button --}}
                 <form method="POST" action="{{ route('admin.ransum.total.download', $upload->id) }}" id="pdfForm">
@@ -163,11 +166,7 @@
                     }
                     
                     function downloadBackendPdf() {
-                        let container = document.querySelector('.bg-white.p-6').cloneNode(true);
-                        // Remove the action buttons form block from HTML
-                        let formBlock = container.querySelector('#pdfForm');
-                        if(formBlock) formBlock.remove();
-                        
+                        let container = document.getElementById('printable-area');
                         document.getElementById('html_content').value = container.innerHTML;
                         document.getElementById('pdfForm').submit();
                     }
