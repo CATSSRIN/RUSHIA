@@ -274,7 +274,9 @@
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex justify-end gap-2">
                                             <a href="{{ route('admin.ransum.total.preview', $ransum->id) }}"
-                                               class="text-amber-600 hover:text-amber-800 text-sm font-medium">{{ __('Total') }}</a>
+                                               class="text-amber-600 hover:text-amber-800 text-sm font-medium">{{ !empty($ransum->vessel_code) ? $ransum->vessel_code : 'MM1' }}</a>
+                                            <a href="{{ route('admin.ransum.list.preview', $ransum->id) }}"
+                                               class="text-blue-600 hover:text-blue-800 text-sm font-medium">{{ __('List') }}</a>
                                             <a href="{{ route('admin.ransum.po.preview', $ransum->id) }}"
                                                class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('PO') }}</a>
                                             <a href="{{ route('admin.ransum.preview', $ransum->id) }}"
