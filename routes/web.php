@@ -85,6 +85,10 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::post('ransum/{id}/do/download', [RansumController::class, 'downloadDo'])->name('ransum.do.download');
     Route::get('ransum/{id}/ams', [RansumController::class, 'amsPreview'])->name('ransum.ams.preview');
     Route::post('ransum/{id}/ams/download', [RansumController::class, 'downloadAms'])->name('ransum.ams.download');
+    Route::get('ransum/{id}/total', [RansumController::class, 'totalPreview'])->name('ransum.total.preview');
+    Route::post('ransum/{id}/total/download', [RansumController::class, 'downloadTotalPdf'])->name('ransum.total.download');
+    Route::get('ransum/{id}/list', [RansumController::class, 'listPreview'])->name('ransum.list.preview');
+    Route::post('ransum/{id}/list/download', [RansumController::class, 'downloadListPdf'])->name('ransum.list.download');
     Route::get('ransum/{id}/po', [RansumController::class, 'poPreview'])->name('ransum.po.preview');
     Route::post('ransum/{id}/po/{supplierKey}/download', [RansumController::class, 'downloadRansumPo'])->name('ransum.po.download');
 
@@ -93,6 +97,7 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}/status/{status}', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
+    Route::get('orders/{order}/hasil', [AdminOrderController::class, 'downloadTotalSheet'])->name('orders.total-sheet');
     Route::get('orders/{order}/invoice', [AdminOrderController::class, 'downloadInvoice'])->name('orders.invoice');
     Route::get('orders/{order}/po/{vendor}', [AdminOrderController::class, 'poPreview'])->name('orders.po.preview');
     Route::post('orders/{order}/po/{vendor}/download', [AdminOrderController::class, 'downloadPo'])->name('orders.po.download');

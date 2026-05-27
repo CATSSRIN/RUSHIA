@@ -645,6 +645,154 @@ class RansumController extends Controller
     }
 
     // ------------------------------------------------------------------
+    // Total Preview – combined items grouped by section
+    // ------------------------------------------------------------------
+
+    public function totalPreview(int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Total hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = [];
+        // Map products for fast lookup
+        $products = Product::with('vendor')->get()->keyBy('kode');
+
+        $grandTotalBeli = 0;
+        $grandTotalJual = 0;
+        $grandTotalProfit = 0;
+
+        foreach ($upload->items as $item) {
+            $sec = $item->section ?? 'UNKNOWN';
+            $kode = $item->kode_item;
+            $product = $products->get($kode);
+            
+            $supplierName = $product?->vendor?->name ?? '-';
+            // AMS HARGA JUAL is base beli (from product if available, else from item)
+            $baseBeli = $product ? $product->harga_supplier : (is_numeric($item->harga_supplier) ? $item->harga_supplier : 10000);
+            $baseJual = $product ? $product->harga_jual : $item->harga;
+            $satuan = $product ? $product->unit : $item->satuan;
+            $qty = $item->qty;
+
+            $totalBeli = $baseBeli * $qty;
+            $totalJual = $baseJual * $qty;
+            $profit = $totalJual - $totalBeli;
+            $percent = $totalBeli > 0 ? ($profit / $totalBeli) * 100 : 0;
+
+            $grandTotalBeli += $totalBeli;
+            $grandTotalJual += $totalJual;
+            $grandTotalProfit += $profit;
+
+            $grouped[$sec][] = [
+                'kode' => $kode,
+                'nama_ransum' => $item->nama_ransum,
+                'items' => $item->items,
+                'merk_spec' => $item->merk_spec,
+                'supplier' => $supplierName,
+                'ams_harga_jual' => $baseBeli,
+                'ams_satuan' => $baseJual . ($satuan ? ' ' . $satuan : ''),
+                'qty' => $qty,
+                'pemesanan_harga_beli' => $totalBeli,
+                'pemesanan_harga_jual' => $totalJual,
+                'profit' => $profit,
+                'percent' => $percent,
+                'remarks' => $item->ket_remarks,
+            ];
+        }
+
+        return view('admin.ransum.total_preview', compact('upload', 'grouped', 'grandTotalBeli', 'grandTotalJual', 'grandTotalProfit'));
+    }
+
+    public function downloadTotalPdf(Request $request, int $id)
+    {
+        $upload = RansumUpload::findOrFail($id);
+        
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('Total hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $htmlContent = $request->input('html_content');
+
+        $pdf = Pdf::loadView('admin.ransum.total_pdf', compact('upload', 'htmlContent'))
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'Total-Ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    // ------------------------------------------------------------------
+    // List Preview – similar to total preview but for PDF List
+    // ------------------------------------------------------------------
+
+    public function listPreview(int $id)
+    {
+        $upload = RansumUpload::with('items')->findOrFail($id);
+
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('List hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $grouped = [];
+        $products = Product::with('vendor')->get()->keyBy('kode');
+
+        foreach ($upload->items as $item) {
+            $sec = $item->section ?? 'UNKNOWN';
+            $kode = $item->kode_item;
+            $product = $products->get($kode);
+            
+            $supplierName = $product?->vendor?->name ?? '-';
+            $baseBeli = $product ? $product->harga_supplier : (is_numeric($item->harga_supplier) ? $item->harga_supplier : 10000);
+            $baseJual = $product ? $product->harga_jual : $item->harga;
+            $satuan = $product ? $product->unit : $item->satuan;
+            $qty = $item->qty;
+
+            $totalBeli = $baseBeli * $qty;
+            $totalJual = $baseJual * $qty;
+
+            $grouped[$sec][] = [
+                'kode' => $kode,
+                'nama_ransum' => $item->nama_ransum,
+                'items' => $item->items,
+                'merk_spec' => $item->merk_spec,
+                'supplier' => $supplierName,
+                'ams_harga_jual' => $baseBeli,
+                'ams_satuan' => $baseJual . ($satuan ? ' ' . $satuan : ''),
+                'qty' => $qty,
+                'pemesanan_harga_beli' => $totalBeli,
+                'pemesanan_harga_jual' => $totalJual,
+                'remarks' => $item->ket_remarks,
+            ];
+        }
+
+        return view('admin.ransum.list_preview', compact('upload', 'grouped'));
+    }
+
+    public function downloadListPdf(Request $request, int $id)
+    {
+        $upload = RansumUpload::findOrFail($id);
+        
+        if ($upload->status !== 'imported') {
+            return redirect()->route('admin.ransum.preview', $upload->id)
+                ->with('error', __('List hanya tersedia untuk data yang sudah diimport.'));
+        }
+
+        $htmlContent = $request->input('html_content');
+
+        $pdf = Pdf::loadView('admin.ransum.list_pdf', compact('upload', 'htmlContent'))
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'List-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    // ------------------------------------------------------------------
     // PO Preview – items grouped per vendor from product code match (editable)
     // ------------------------------------------------------------------
 

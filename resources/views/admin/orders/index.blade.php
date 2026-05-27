@@ -114,6 +114,7 @@
 
                                     <div class="flex flex-wrap gap-2">
                                         <a href="{{ route('admin.orders.show', $order) }}" class="inline-flex items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">Lihat Detail</a>
+                                        <a href="{{ route('admin.orders.total-sheet', $order) }}" class="inline-flex items-center justify-center rounded-lg border border-amber-100 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-100">Hasil</a>
                                         <a href="{{ route('admin.orders.invoice', $order) }}" class="inline-flex items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">Download Invoice</a>
                                     </div>
                                 </div>
@@ -272,6 +273,10 @@
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex justify-end gap-2">
+                                            <a href="{{ route('admin.ransum.total.preview', $ransum->id) }}"
+                                               class="text-amber-600 hover:text-amber-800 text-sm font-medium">{{ !empty($ransum->vessel_code) ? $ransum->vessel_code : 'MM1' }}</a>
+                                            <a href="{{ route('admin.ransum.list.preview', $ransum->id) }}"
+                                               class="text-blue-600 hover:text-blue-800 text-sm font-medium">{{ __('List') }}</a>
                                             <a href="{{ route('admin.ransum.po.preview', $ransum->id) }}"
                                                class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('PO') }}</a>
                                             <a href="{{ route('admin.ransum.preview', $ransum->id) }}"
