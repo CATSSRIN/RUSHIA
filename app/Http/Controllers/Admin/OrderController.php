@@ -16,8 +16,9 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with('user', 'ship', 'items.product.vendor')->latest()->get();
-        $ransumOrders = RansumUpload::whereNotNull('no_do')
+        $orders = Order::with('user', 'ship', 'items.product.vendor', 'pos')->latest()->get();
+        $ransumOrders = RansumUpload::with('pos')
+            ->whereNotNull('no_do')
             ->where('no_do', '!=', '')
             ->orderByDesc('created_at')
             ->get();
@@ -26,7 +27,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load('user', 'ship', 'items.product.vendor');
+        $order->load('user', 'ship', 'items.product.vendor', 'pos');
         return view('admin.orders.show', compact('order'));
     }
 
@@ -125,6 +126,52 @@ public function downloadPo(Request $request, Order $order, Vendor $vendor)
 
         $filename = 'PO-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '-' . Str::slug($vendor->name) . '.pdf';
 
+        // Save PDF to storage
+        $pdfDir = storage_path('app/private/order_pos');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($pdfDir, 0755);
+        \Illuminate\Support\Facades\File::put($pdfDir . '/' . $filename, $pdf->output());
+
+        // Create or update OrderPo record
+        \App\Models\OrderPo::updateOrCreate(
+            [
+                'order_id' => $order->id,
+                'vendor_id' => $vendor->id,
+            ],
+            [
+                'po_number' => $request->input('po_number', 'PO-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '-' . $vendor->id),
+                'pdf_path' => $filename,
+            ]
+        );
+
         return $pdf->download($filename);
+    }
+
+    public function serveSavedPoPdf(int $id)
+    {
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $fullPath = storage_path('app/private/order_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->file($fullPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $po->pdf_path . '"'
+        ]);
+    }
+
+    public function updatePoStatus(Request $request, int $id)
+    {
+        $request->validate([
+            'status' => ['required', 'string', 'in:menunggu,diproses,selesai'],
+        ]);
+
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $po->update([
+            'status' => $request->input('status')
+        ]);
+
+        return back()->with('success', 'Status PO berhasil diperbarui.');
     }
 }

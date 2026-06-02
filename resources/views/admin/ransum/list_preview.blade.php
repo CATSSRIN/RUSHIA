@@ -29,7 +29,7 @@
                 {{-- Info Section --}}
                 <div style="font-weight: bold; font-size: 14px; margin-top: 8px; margin-bottom: 8px;">
                     <div id="vessel-title" style="text-transform: uppercase;">{{ $upload->vessel_name ?? 'UNKNOWN' }} ({{ $upload->jumlah_hari_pensupplaian ?? '-' }} Hari)</div>
-                    <div>ETB : {{ $upload->eta ?? '-' }}</div>
+                    <div>ETB : {{ $upload->eta ? (strtotime($upload->eta) ? \Carbon\Carbon::parse($upload->eta)->format('d-m-Y') : $upload->eta) : '-' }}</div>
                     <div>ETD : {{ $upload->date_end ?? '-' }}</div>
                 </div>
 

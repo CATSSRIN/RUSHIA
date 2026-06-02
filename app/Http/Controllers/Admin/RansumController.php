@@ -936,6 +936,24 @@ public function downloadRansumPo(Request $request, int $id, string $supplierKey)
 
         $filename = 'PO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '-' . $supplierKey . '.pdf';
 
+        // Save PDF to storage
+        $pdfDir = storage_path('app/private/ransum_pos');
+        File::ensureDirectoryExists($pdfDir, 0755);
+        File::put($pdfDir . '/' . $filename, $pdf->output());
+
+        // Create or update RansumPo record
+        \App\Models\RansumPo::updateOrCreate(
+            [
+                'ransum_upload_id' => $upload->id,
+                'supplier_key' => $supplierKey,
+            ],
+            [
+                'vendor_name' => $formData['vendor_name'] ?? $supplierName,
+                'po_number' => $formData['po_number'] ?? ('PO-' . $upload->id . '-' . $supplierKey),
+                'pdf_path' => $filename,
+            ]
+        );
+
         return $pdf->download($filename);
     }
 
@@ -1092,5 +1110,34 @@ public function downloadRansumPo(Request $request, int $id, string $supplierKey)
         $normalized = strtoupper(trim((string) $code));
 
         return $normalized !== '' ? $normalized : null;
+    }
+
+    public function serveSavedPoPdf(int $id)
+    {
+        $po = \App\Models\RansumPo::findOrFail($id);
+        $fullPath = storage_path('app/private/ransum_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->file($fullPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $po->pdf_path . '"'
+        ]);
+    }
+
+    public function updatePoStatus(Request $request, int $id)
+    {
+        $request->validate([
+            'status' => ['required', 'string', 'in:menunggu,diproses,selesai'],
+        ]);
+
+        $po = \App\Models\RansumPo::findOrFail($id);
+        $po->update([
+            'status' => $request->input('status')
+        ]);
+
+        return back()->with('success', 'Status PO berhasil diperbarui.');
     }
 }

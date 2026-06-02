@@ -84,21 +84,58 @@
             @if($poVendors->isNotEmpty())
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 class="font-semibold text-gray-700 mb-3">{{ __('Surat PO') }}</h3>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-4">
                     @foreach($poVendors as $vendor)
-                        <div class="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
-                            <div>
-                                <p class="text-xs text-gray-500 font-medium">{{ $vendor->name }}</p>
-                                <p class="text-xs text-gray-400">PO-{{ str_pad($order->id,5,'0',STR_PAD_LEFT) }}-{{ $vendor->id }}</p>
+                        @php
+                            $savedPo = $order->pos->first(fn($p) => $p->vendor_id === $vendor->id);
+                        @endphp
+                        <div class="flex flex-col gap-2 border border-gray-200 rounded-xl px-4 py-3 bg-gray-50/50 min-w-[260px] shadow-sm">
+                            <div class="flex items-center justify-between gap-4 border-b border-gray-150 pb-2">
+                                <div>
+                                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">{{ $vendor->name }}</p>
+                                    @if($savedPo)
+                                        <a href="{{ route('admin.orders.po.serve_saved', $savedPo->id) }}" target="_blank" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 mt-0.5">
+                                            {{ $savedPo->po_number }}
+                                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                        </a>
+                                    @else
+                                        <p class="text-xs text-gray-400 mt-0.5">PO-{{ str_pad($order->id,5,'0',STR_PAD_LEFT) }}-{{ $vendor->id }}</p>
+                                    @endif
+                                </div>
                             </div>
-                            <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}"
-                               class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition whitespace-nowrap">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
-                                Preview & Download
-                            </a>
+                            
+                            @if($savedPo)
+                                <div class="space-y-3 mt-1">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Status PO:</p>
+                                        <div class="flex items-center gap-1 mt-1">
+                                            <form method="POST" action="{{ route('admin.orders.po.update_status', $savedPo->id) }}" class="inline-flex gap-1">
+                                                @csrf
+                                                <button type="submit" name="status" value="menunggu" class="px-2 py-1 text-xs font-semibold rounded-md transition border {{ $savedPo->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
+                                                <button type="submit" name="status" value="diproses" class="px-2 py-1 text-xs font-semibold rounded-md transition border {{ $savedPo->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
+                                                <button type="submit" name="status" value="selesai" class="px-2 py-1 text-xs font-semibold rounded-md transition border {{ $savedPo->status === 'selesai' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Selesai</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-200/60">
+                                        <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}" class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1 font-medium">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            Edit / Regenerate PO
+                                        </a>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="mt-2">
+                                    <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}"
+                                       class="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition w-full justify-center">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                        Create PO Document
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>

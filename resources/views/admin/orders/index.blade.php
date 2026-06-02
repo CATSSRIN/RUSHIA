@@ -189,14 +189,40 @@
                                                 $progressiveNumber = str_pad($order->id + $vIdx, 3, '0', STR_PAD_LEFT);
                                                 $defaultPoNumber = "{$progressiveNumber}/AMS-PO-LBJ/{$monthRoman}/{$year}";
                                                 $poNumber = $poData[$vendorSlug] ?? $defaultPoNumber;
+                                                $savedPo = $order->pos->first(fn($p) => $p->vendor_id === $vendor->id);
                                             @endphp
 
-                                            <div class="rounded-xl border border-gray-100 p-4">
+                                            <div class="rounded-xl border border-gray-100 p-4 {{ $savedPo ? 'bg-slate-50/50' : '' }}">
                                                 <p class="text-sm font-medium text-gray-900">{{ $vendor->name }}</p>
-                                                <p class="mt-1 text-xs font-semibold text-indigo-600 break-all">{{ $poNumber }}</p>
-                                                <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}" class="mt-3 inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-indigo-700">
-                                                    Preview Surat PO
-                                                </a>
+                                                @if($savedPo)
+                                                    <div class="mt-2 flex flex-col gap-1.5">
+                                                        <a href="{{ route('admin.orders.po.serve_saved', $savedPo->id) }}" target="_blank" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
+                                                            {{ $savedPo->po_number }}
+                                                            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                                        </a>
+                                                        
+                                                        <div class="flex items-center gap-1 mt-1">
+                                                            <form method="POST" action="{{ route('admin.orders.po.update_status', $savedPo->id) }}" class="inline-flex gap-1">
+                                                                @csrf
+                                                                <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
+                                                                <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
+                                                                <button type="submit" name="status" value="selesai" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'selesai' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Selesai</button>
+                                                            </form>
+                                                        </div>
+
+                                                        <div class="mt-2 pt-2 border-t border-gray-200/60">
+                                                            <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}" class="text-[10px] text-gray-400 hover:text-indigo-600 transition flex items-center gap-1">
+                                                                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                                Edit / Regenerate PO
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <p class="mt-1 text-xs font-semibold text-indigo-600 break-all">{{ $poNumber }}</p>
+                                                    <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}" class="mt-3 inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-indigo-700">
+                                                        Preview Surat PO
+                                                    </a>
+                                                @endif
                                             </div>
                                         @empty
                                             <div class="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-400">
@@ -235,28 +261,35 @@
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $ransum->no_do }}</td>
                                     
-                                    {{-- Kolom PO Number yang akan muncul jika sudah disave dari preview --}}
-                                    <td class="px-6 py-4 text-sm font-bold text-indigo-600">
-    @php
-        $poJson = $ransum->po_number;
-        $poData = (is_string($poJson) && str_starts_with(trim($poJson), '{')) ? json_decode($poJson, true) : [];
-    @endphp
-    
-    @if(is_array($poData) && count($poData) > 0)
-        <div class="flex flex-col gap-1">
-            @foreach($poData as $vSlug => $poNum)
-                <div class="text-xs" title="{{ strtoupper(str_replace('-', ' ', $vSlug)) }}">
-                    <span class="text-gray-400 font-normal uppercase">{{ strtoupper(str_replace('-', ' ', $vSlug)) }}:</span> <br>
-                    {{ $poNum }}
-                </div>
-            @endforeach
-        </div>
-    @elseif(!empty($poJson) && !is_array($poData))
-        {{ $poJson }}
-    @else
-        <span class="text-gray-400 font-normal italic text-xs">Belum di-download</span>
-    @endif
-</td>
+                                    {{-- Kolom PO Ransum yang disave dan bisa diupdate statusnya --}}
+                                    <td class="px-6 py-4 text-sm">
+                                        @if($ransum->pos->isNotEmpty())
+                                            <div class="flex flex-col gap-3 min-w-[200px]">
+                                                @foreach($ransum->pos as $po)
+                                                    <div class="border border-gray-200 bg-slate-50 p-2 rounded-lg flex flex-col gap-1 shadow-sm">
+                                                        <div class="flex flex-col gap-0.5">
+                                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide truncate" title="{{ $po->vendor_name }}">{{ $po->vendor_name }}</div>
+                                                            <a href="{{ route('admin.ransum.po.serve_saved', $po->id) }}" target="_blank" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1" title="Buka PDF PO">
+                                                                {{ $po->po_number }}
+                                                                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                                            </a>
+                                                        </div>
+                                                        
+                                                        <div class="flex items-center gap-1 mt-1">
+                                                            <form method="POST" action="{{ route('admin.ransum.po.update_status', $po->id) }}" class="inline-flex gap-1">
+                                                                @csrf
+                                                                <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
+                                                                <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
+                                                                <button type="submit" name="status" value="selesai" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'selesai' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Selesai</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400 font-normal italic text-xs">Belum ada PO yang dibuat</span>
+                                        @endif
+                                    </td>
                                     
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ $ransum->vessel_name ?? '—' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $ransum->voyage ?? '—' }}</td>
