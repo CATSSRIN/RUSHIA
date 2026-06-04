@@ -87,7 +87,7 @@
                 <div class="flex flex-wrap gap-4">
                     @foreach($poVendors as $vendor)
                         @php
-                            $savedPo = $order->pos->first(fn($p) => $p->vendor_id === $vendor->id);
+                            $savedPo = $order->pos->first(fn($p) => $p->vendor_id == $vendor->id);
                         @endphp
                         <div class="flex flex-col gap-2 border border-gray-200 rounded-xl px-4 py-3 bg-gray-50/50 min-w-[260px] shadow-sm">
                             <div class="flex items-center justify-between gap-4 border-b border-gray-150 pb-2">

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\RansumUpload;
 use App\Models\Vendor;
+use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,11 +18,42 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::with('user', 'ship', 'items.product.vendor', 'pos')->latest()->get();
-        $ransumOrders = RansumUpload::with('pos')
+        $ransumOrders = RansumUpload::with('pos', 'items')
             ->whereNotNull('no_do')
             ->where('no_do', '!=', '')
             ->orderByDesc('created_at')
             ->get();
+
+        // Group Ransum items by vendor name in a single efficient query
+        $codes = $ransumOrders->flatMap(fn($r) => $r->items->pluck('kode_item'))
+            ->map(fn($c) => strtoupper(trim((string) $c)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $productsByCode = collect();
+        if ($codes->isNotEmpty()) {
+            $productsByCode = Product::with('vendor')
+                ->whereIn('kode', $codes)
+                ->get()
+                ->keyBy(fn($p) => strtoupper(trim((string) $p->kode)));
+        }
+
+        foreach ($ransumOrders as $ransum) {
+            $grouped = [];
+            foreach ($ransum->items as $item) {
+                $normalizedCode = strtoupper(trim((string) $item->kode_item));
+                $product = $normalizedCode !== '' ? $productsByCode->get($normalizedCode) : null;
+                $vendorName = ($product && $product->vendor) ? trim((string) $product->vendor->name) : 'UNKNOWN';
+                if ($vendorName === '') {
+                    $vendorName = 'UNKNOWN';
+                }
+                $grouped[$vendorName][] = $item;
+            }
+            ksort($grouped);
+            $ransum->grouped_items_by_vendor = $grouped;
+        }
+
         return view('admin.orders.index', compact('orders', 'ransumOrders'));
     }
 
@@ -57,7 +89,7 @@ class OrderController extends Controller
     public function poPreview(Order $order, Vendor $vendor)
     {
         $order->load('user', 'ship', 'items.product.vendor');
-        $items = $order->items->filter(fn($item) => $item->product?->vendor_id === $vendor->id)->values();
+        $items = $order->items->filter(fn($item) => $item->product?->vendor_id == $vendor->id)->values();
 
         if ($items->isEmpty()) {
             return redirect()->route('admin.orders.index')
@@ -70,7 +102,7 @@ class OrderController extends Controller
 public function downloadPo(Request $request, Order $order, Vendor $vendor)
     {
         $order->load('user', 'ship', 'items.product.vendor');
-        $items = $order->items->filter(fn($item) => $item->product?->vendor_id === $vendor->id)->values();
+        $items = $order->items->filter(fn($item) => $item->product?->vendor_id == $vendor->id)->values();
 
         if ($items->isEmpty()) {
             return redirect()->route('admin.orders.index')
