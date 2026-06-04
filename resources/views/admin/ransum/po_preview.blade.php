@@ -52,10 +52,10 @@
                 <div id="panel-{{ $vendorSlug }}" class="vendor-panel {{ !$loop->first ? 'hidden' : '' }}">
                     <form method="POST" action="{{ route('admin.ransum.po.download', [$upload->id, $vendorSlug]) }}" class="po-form" target="_blank">
                         @csrf
-                        <div class="bg-white shadow-sm p-4 overflow-x-auto mb-4 border border-gray-400">
+                        <div class="bg-slate-50 shadow-inner p-8 overflow-x-auto mb-4 border border-gray-300 rounded-xl">
                             
-                            {{-- EXCEL STYLE WRAPPER --}}
-                            <div style="min-width: 900px; font-family: Arial, sans-serif; font-size: 12px; color: #000;">
+                            {{-- EXCEL STYLE WRAPPER (PAPER PREVIEW) --}}
+                            <div style="min-width: 900px; font-family: Arial, sans-serif; font-size: 12px; color: #000; padding: 40px 45px; background: #ffffff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; border-radius: 4px;">
                                 
                                 {{-- Header Titles --}}
                                 <div class="flex justify-between font-bold text-lg mb-2 px-1">

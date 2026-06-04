@@ -112,7 +112,7 @@
                                                     </td>
                                                 @endif
                                                 <td class="px-6 py-4 text-sm font-semibold">
-                                                    <a href="{{ route('admin.orders.po.serve_saved', $po->id) }}" target="_blank" class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                    <a href="{{ route('admin.orders.po.serve_saved', $po->id) }}" class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-900 hover:underline">
                                                         <span>{{ $po->po_number }}</span>
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -126,7 +126,7 @@
                                                     {{ $po->created_at->format('d M Y · H:i') }}
                                                 </td>
                                                 <td class="px-6 py-4 text-sm">
-                                                    <form method="POST" action="{{ route('admin.orders.po.update_status', $po->id) }}" class="inline-flex gap-1.5">
+                                                    <form method="POST" action="{{ route('admin.orders.po.update_status', $po->id) }}" class="inline-flex gap-1.5 status-update-form">
                                                         @csrf
                                                         <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
                                                         <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
@@ -267,13 +267,13 @@
                                                 <p class="text-sm font-medium text-gray-900">{{ $vendor->name }}</p>
                                                 @if($savedPo)
                                                     <div class="mt-2 flex flex-col gap-1.5">
-                                                        <a href="{{ route('admin.orders.po.serve_saved', $savedPo->id) }}" target="_blank" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
+                                                        <a href="{{ route('admin.orders.po.serve_saved', $savedPo->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
                                                             {{ $savedPo->po_number }}
                                                             <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                                         </a>
                                                         
                                                         <div class="flex items-center gap-1 mt-1">
-                                                            <form method="POST" action="{{ route('admin.orders.po.update_status', $savedPo->id) }}" class="inline-flex gap-1">
+                                                            <form method="POST" action="{{ route('admin.orders.po.update_status', $savedPo->id) }}" class="inline-flex gap-1 status-update-form">
                                                                 @csrf
                                                                 <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
                                                                 <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
@@ -426,13 +426,13 @@
                                             <div class="rounded-xl border border-gray-100 p-4 bg-slate-50/50">
                                                 <p class="text-sm font-medium text-gray-900">{{ $po->vendor_name }}</p>
                                                 <div class="mt-2 flex flex-col gap-1.5">
-                                                    <a href="{{ route('admin.ransum.po.serve_saved', $po->id) }}" target="_blank" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
+                                                    <a href="{{ route('admin.ransum.po.serve_saved', $po->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
                                                         {{ $po->po_number }}
                                                         <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                                     </a>
                                                     
                                                     <div class="flex items-center gap-1 mt-1">
-                                                        <form method="POST" action="{{ route('admin.ransum.po.update_status', $po->id) }}" class="inline-flex gap-1">
+                                                        <form method="POST" action="{{ route('admin.ransum.po.update_status', $po->id) }}" class="inline-flex gap-1 status-update-form">
                                                             @csrf
                                                             <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
                                                             <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
@@ -456,4 +456,69 @@
             @endif
         </div>
     </div>
+    <script>
+        let clickedButton = null;
+        document.addEventListener('click', function(event) {
+            if (event.target.tagName === 'BUTTON' && event.target.type === 'submit') {
+                clickedButton = event.target;
+            }
+        });
+
+        document.addEventListener('submit', function (event) {
+            const form = event.target;
+            if (form.classList.contains('status-update-form')) {
+                event.preventDefault(); // Prevent full page reload
+
+                const submitter = event.submitter || clickedButton;
+                if (!submitter) return;
+
+                const statusValue = submitter.value;
+                const buttons = form.querySelectorAll('button');
+
+                // Disable buttons temporarily
+                buttons.forEach(btn => btn.disabled = true);
+
+                const formData = new FormData(form);
+                formData.set('status', statusValue);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        buttons.forEach(btn => {
+                            btn.disabled = false;
+                            const isClicked = btn.value === statusValue;
+                            
+                            // Reset class styles
+                            btn.className = 'px-1.5 py-0.5 text-[9px] font-bold rounded transition border';
+                            
+                            if (isClicked) {
+                                if (statusValue === 'menunggu') {
+                                    btn.classList.add('bg-amber-100', 'text-amber-800', 'border-amber-300');
+                                } else if (statusValue === 'diproses') {
+                                    btn.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-300');
+                                } else if (statusValue === 'selesai') {
+                                    btn.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+                                }
+                            } else {
+                                btn.classList.add('bg-white', 'border-gray-200', 'text-gray-500', 'hover:bg-gray-50');
+                            }
+                        });
+                    } else {
+                        buttons.forEach(btn => btn.disabled = false);
+                        alert('Gagal memperbarui status. Silakan coba lagi.');
+                    }
+                })
+                .catch(err => {
+                    buttons.forEach(btn => btn.disabled = false);
+                    alert('Terjadi kesalahan jaringan.');
+                });
+            }
+        });
+    </script>
 </x-app-layout>

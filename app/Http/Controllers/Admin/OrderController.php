@@ -187,10 +187,39 @@ public function downloadPo(Request $request, Order $order, Vendor $vendor)
             abort(404);
         }
 
+        return view('admin.po_saved_preview', [
+            'poNumber' => $po->po_number,
+            'streamUrl' => route('admin.orders.po.stream_saved', $po->id),
+            'downloadUrl' => route('admin.orders.po.download_saved', $po->id),
+            'backUrl' => route('admin.orders.index'),
+        ]);
+    }
+
+    public function streamSavedPoPdf(int $id)
+    {
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $fullPath = storage_path('app/private/order_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
         return response()->file($fullPath, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $po->pdf_path . '"'
+            'Content-Disposition' => 'inline'
         ]);
+    }
+
+    public function downloadSavedPoPdf(int $id)
+    {
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $fullPath = storage_path('app/private/order_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->download($fullPath, $po->pdf_path);
     }
 
     public function updatePoStatus(Request $request, int $id)
