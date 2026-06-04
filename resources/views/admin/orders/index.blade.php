@@ -329,7 +329,7 @@
                                         <div class="flex flex-wrap items-center gap-3">
                                             <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $ransumStatusClass }}">{{ $ransumStatusLabel }}</span>
                                             <span class="text-sm text-gray-500">DO #{{ $ransum->no_do }}</span>
-                                            <span class="text-sm text-gray-400">{{ $ransum->created_at->format('d M Y · H:i') }}</span>
+                                            <span class="text-sm text-gray-400">{{ $ransum->created_at->format('d M Y') }}</span>
                                         </div>
                                         <div>
                                             <h3 class="text-lg font-semibold text-gray-900">{{ $ransum->vessel_name }}</h3>
@@ -359,6 +359,16 @@
                                                     —
                                                 @endif
                                             </p>
+                                            <div class="mt-2 pt-2 border-t border-slate-200/60">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Budget</p>
+                                                <p class="mt-0.5 text-sm font-semibold text-slate-700">
+                                                    @if($ransum->budget)
+                                                        Rp {{ number_format($ransum->budget, 0, ',', '.') }}
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </p>
+                                            </div>
                                         </div>
                                         <div class="rounded-xl bg-slate-50 p-4">
                                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Tanggal Pengiriman</p>
