@@ -12,6 +12,7 @@
             'confirmed' => 'bg-blue-100 text-blue-700',
             'delivered' => 'bg-emerald-100 text-emerald-700',
             'cancelled' => 'bg-red-100 text-red-700',
+            'imported' => 'bg-emerald-100 text-emerald-700',
         ];
 
         $statusLabels = [
@@ -19,14 +20,15 @@
             'confirmed' => 'Diproses',
             'delivered' => 'Selesai',
             'cancelled' => 'Dibatalkan',
+            'imported' => 'Imported',
         ];
 
-        $summaryTotals = $orders->reduce(function ($carry, $order) {
+        $summaryTotals = $ransumOrders->reduce(function ($carry, $order) {
             $carry['total']++;
             $carry['pending'] += $order->status === 'pending' ? 1 : 0;
-            $carry['confirmed'] += $order->status === 'confirmed' ? 1 : 0;
+            $carry['confirmed'] += $order->status === 'imported' ? 1 : 0;
             $carry['delivered'] += $order->status === 'delivered' ? 1 : 0;
-            $carry['value'] += (float) $order->total_price;
+            $carry['value'] += (float) $order->total_belanja_ransum;
 
             return $carry;
         }, [
@@ -73,7 +75,7 @@
             </div>
 
             @php
-                $ordersWithPos = $orders->filter(function($order) {
+                $ordersWithPos = $ransumOrders->filter(function($order) {
                     return $order->pos->isNotEmpty();
                 });
             @endphp
@@ -101,18 +103,18 @@
                                                 @if($index === 0)
                                                     <td class="px-6 py-4 text-sm font-medium text-gray-900" rowspan="{{ $poCount }}">
                                                         <div class="font-semibold text-indigo-600">
-                                                            {{ $order->ship->name ?? 'Kapal Tidak Diketahui' }}
+                                                            {{ $order->vessel_name ?? 'Kapal Tidak Diketahui' }}
                                                         </div>
                                                         <div class="text-xs text-gray-400 mt-1">
-                                                            Order #{{ $order->id }} · {{ $order->created_at->format('d M Y') }}
+                                                            DO #{{ $order->no_do }} · {{ $order->created_at->format('d M Y') }}
                                                         </div>
                                                         <div class="text-xs text-gray-500 mt-0.5">
-                                                            {{ $order->user->company_name ?? $order->user->name }}
+                                                            {{ $order->pemohon }}
                                                         </div>
                                                     </td>
                                                 @endif
                                                 <td class="px-6 py-4 text-sm font-semibold">
-                                                    <a href="{{ route('admin.orders.po.serve_saved', $po->id) }}" class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                    <a href="{{ route('admin.ransum.po.serve_saved', $po->id) }}" class="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-900 hover:underline">
                                                         <span>{{ $po->po_number }}</span>
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -120,13 +122,13 @@
                                                     </a>
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-700">
-                                                    {{ $po->vendor->name ?? 'Vendor Tidak Diketahui' }}
+                                                    {{ $po->vendor_name }}
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-500">
                                                     {{ $po->created_at->format('d M Y · H:i') }}
                                                 </td>
                                                 <td class="px-6 py-4 text-sm">
-                                                    <form method="POST" action="{{ route('admin.orders.po.update_status', $po->id) }}" class="inline-flex gap-1.5 status-update-form">
+                                                    <form method="POST" action="{{ route('admin.ransum.po.update_status', $po->id) }}" class="inline-flex gap-1.5 status-update-form">
                                                         @csrf
                                                         <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
                                                         <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
@@ -143,7 +145,7 @@
                 </div>
             @endif
 
-            @if($orders->isEmpty())
+            @if($ransumOrders->isEmpty())
                 <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
                     <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-50 text-gray-300">
                         <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,16 +157,15 @@
                 </div>
             @else
                 <div class="space-y-5">
-                    @foreach($orders as $order)
+                    @foreach($ransumOrders as $order)
                         @php
-                            $vendors = $order->items->map(fn($item) => $item->product?->vendor)->filter()->unique('id')->values();
                             $poData = is_string($order->po_number) && str_starts_with(trim($order->po_number), '{')
                                 ? json_decode($order->po_number, true)
                                 : [];
                             $statusClass = $statusClasses[$order->status] ?? 'bg-slate-100 text-slate-700';
                             $statusLabel = $statusLabels[$order->status] ?? ucfirst($order->status);
-                            $pickupSchedule = $order->pickup_date
-                                ? \Carbon\Carbon::parse($order->pickup_date)->format('d M Y') . ($order->pickup_time ? ' · ' . \Carbon\Carbon::parse($order->pickup_time)->format('H:i') : '')
+                            $pickupSchedule = $order->delivery_date
+                                ? \Carbon\Carbon::parse($order->delivery_date)->format('d M Y')
                                 : null;
                         @endphp
 
@@ -174,19 +175,19 @@
                                     <div class="space-y-3">
                                         <div class="flex flex-wrap items-center gap-3">
                                             <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ $statusLabel }}</span>
-                                            <span class="text-sm text-gray-500">Pesanan #{{ $order->id }}</span>
+                                            <span class="text-sm text-gray-500">DO #{{ $order->no_do }}</span>
                                             <span class="text-sm text-gray-400">{{ $order->created_at->format('d M Y · H:i') }}</span>
                                         </div>
                                         <div>
-                                            <h3 class="text-lg font-semibold text-gray-900">{{ $order->user->company_name ?? $order->user->name }}</h3>
-                                            <p class="text-sm text-gray-500">Kapal {{ $order->ship->name }} · {{ $order->items->count() }} item</p>
+                                            <h3 class="text-lg font-semibold text-gray-900">{{ $order->pemohon }}</h3>
+                                            <p class="text-sm text-gray-500">Kapal {{ $order->vessel_name }} · {{ $order->items->count() }} item</p>
                                         </div>
                                     </div>
 
                                     <div class="flex flex-wrap gap-2">
-                                        <a href="{{ route('admin.orders.show', $order) }}" class="inline-flex items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">Lihat Detail</a>
-                                        <a href="{{ route('admin.orders.total-sheet', $order) }}" class="inline-flex items-center justify-center rounded-lg border border-amber-100 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-100">Hasil</a>
-                                        <a href="{{ route('admin.orders.invoice', $order) }}" class="inline-flex items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">Download Invoice</a>
+                                        <a href="{{ route('admin.ransum.preview', $order->id) }}" class="inline-flex items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">Lihat Detail</a>
+                                        <a href="{{ route('admin.ransum.total.preview', $order->id) }}" class="inline-flex items-center justify-center rounded-lg border border-amber-100 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-100">{{ !empty($order->vessel_code) ? $order->vessel_code : 'MM1' }}</a>
+                                        <a href="{{ route('admin.ransum.invoice', $order->id) }}" class="inline-flex items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">Download Invoice</a>
                                     </div>
                                 </div>
                             </div>
@@ -196,7 +197,13 @@
                                     <div class="grid gap-4 sm:grid-cols-2">
                                         <div class="rounded-xl bg-slate-50 p-4">
                                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Pesanan</p>
-                                            <p class="mt-2 text-lg font-semibold text-slate-900">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                                            <p class="mt-2 text-lg font-semibold text-slate-900">
+                                                @if($order->total_belanja_ransum)
+                                                    Rp {{ number_format($order->total_belanja_ransum, 0, ',', '.') }}
+                                                @else
+                                                    —
+                                                @endif
+                                            </p>
                                         </div>
                                         <div class="rounded-xl bg-slate-50 p-4">
                                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Jadwal Pickup</p>
@@ -207,97 +214,74 @@
                                     <div class="space-y-3">
                                         <div>
                                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Lokasi Pickup</p>
-                                            <p class="mt-1 text-sm text-gray-700">{{ $order->pickup_location ?: 'Belum diisi' }}</p>
+                                            <p class="mt-1 text-sm text-gray-700">{{ $order->deliver_to ?: 'Belum diisi' }}</p>
                                         </div>
                                         <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Catatan</p>
-                                            <p class="mt-1 text-sm text-gray-700">{{ $order->notes ?: 'Tidak ada catatan tambahan.' }}</p>
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Captain</p>
+                                            <p class="mt-1 text-sm text-gray-700">{{ $order->captain ?: '-' }}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
+                                    @php
+                                        $groupedOrderItems = $order->grouped_items_by_vendor ?? [];
+                                    @endphp
                                     <div class="flex items-center justify-between">
                                         <h4 class="text-sm font-semibold text-gray-900">Ringkasan Item</h4>
-                                        <span class="text-xs text-gray-400">{{ $order->items->count() }} item</span>
+                                        <span class="text-xs text-gray-400">{{ count($groupedOrderItems) }} vendor</span>
                                     </div>
                                     <div class="mt-4 space-y-3">
-                                        @foreach($order->items->take(4) as $item)
-                                            <div class="rounded-xl border border-gray-100 p-4">
-                                                <div class="flex items-start justify-between gap-3">
+                                        @foreach($groupedOrderItems as $vendorName => $items)
+                                            @php
+                                                $vendorSlug = Illuminate\Support\Str::slug($vendorName);
+                                                $hasPo = $order->pos->contains('supplier_key', $vendorSlug);
+                                            @endphp
+                                            <div class="rounded-xl border p-4 transition duration-200 {{ $hasPo ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-gray-100 text-gray-700' }}">
+                                                <div class="flex items-center justify-between gap-3">
                                                     <div>
-                                                        <p class="text-sm font-medium text-gray-900">{{ $item->product?->name ?? 'Produk tidak tersedia' }}</p>
-                                                        <p class="text-xs text-gray-400">{{ $item->product?->vendor?->name ?? 'Tanpa vendor' }}</p>
+                                                        <p class="text-sm font-semibold {{ $hasPo ? 'text-emerald-900' : 'text-gray-900' }}">{{ $vendorName }}</p>
+                                                        <p class="text-xs mt-0.5 {{ $hasPo ? 'text-emerald-600/90' : 'text-gray-400' }}">Supplier Pesanan</p>
                                                     </div>
                                                     <div class="text-right">
-                                                        <p class="text-sm font-semibold text-gray-900">{{ $formatQuantity($item->quantity) }} {{ $item->product?->unit ?? '' }}</p>
-                                                        <p class="text-xs text-gray-400">Rp {{ number_format((float) $item->subtotal, 0, ',', '.') }}</p>
+                                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $hasPo ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' }}">
+                                                            {{ count($items) }} item
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
                                         @endforeach
-
-                                        @if($order->items->count() > 4)
-                                            <div class="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
-                                                +{{ $order->items->count() - 4 }} item lainnya.
-                                            </div>
-                                        @endif
                                     </div>
                                 </div>
 
                                 <div>
                                     <div class="flex items-center justify-between">
                                         <h4 class="text-sm font-semibold text-gray-900">Surat PO Vendor</h4>
-                                        <span class="text-xs text-gray-400">{{ $vendors->count() }} vendor</span>
+                                        <span class="text-xs text-gray-400">{{ $order->pos->count() }} vendor</span>
                                     </div>
                                     <div class="mt-4 space-y-3">
-                                        @forelse($vendors as $vIdx => $vendor)
-                                            @php
-                                                $vendorSlug = \Illuminate\Support\Str::slug($vendor->name);
-                                                $romans = ['01' => 'I', '02' => 'II', '03' => 'III', '04' => 'IV', '05' => 'V', '06' => 'VI', '07' => 'VII', '08' => 'VIII', '09' => 'IX', '10' => 'X', '11' => 'XI', '12' => 'XII'];
-                                                $monthRoman = $romans[$order->created_at->format('m')];
-                                                $year = $order->created_at->format('Y');
-                                                $progressiveNumber = str_pad($order->id + $vIdx, 3, '0', STR_PAD_LEFT);
-                                                $defaultPoNumber = "{$progressiveNumber}/AMS-PO-LBJ/{$monthRoman}/{$year}";
-                                                $poNumber = $poData[$vendorSlug] ?? $defaultPoNumber;
-                                                $savedPo = $order->pos->first(fn($p) => $p->vendor_id == $vendor->id);
-                                            @endphp
-
-                                            <div class="rounded-xl border border-gray-100 p-4 {{ $savedPo ? 'bg-slate-50/50' : '' }}">
-                                                <p class="text-sm font-medium text-gray-900">{{ $vendor->name }}</p>
-                                                @if($savedPo)
-                                                    <div class="mt-2 flex flex-col gap-1.5">
-                                                        <a href="{{ route('admin.orders.po.serve_saved', $savedPo->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
-                                                            {{ $savedPo->po_number }}
-                                                            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                                        </a>
-                                                        
-                                                        <div class="flex items-center gap-1 mt-1">
-                                                            <form method="POST" action="{{ route('admin.orders.po.update_status', $savedPo->id) }}" class="inline-flex gap-1 status-update-form">
-                                                                @csrf
-                                                                <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
-                                                                <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
-                                                                <button type="submit" name="status" value="selesai" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $savedPo->status === 'selesai' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Selesai</button>
-                                                            </form>
-                                                        </div>
-
-                                                        <div class="mt-2 pt-2 border-t border-gray-200/60">
-                                                            <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}" class="text-[10px] text-gray-400 hover:text-indigo-600 transition flex items-center gap-1">
-                                                                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                                Edit / Regenerate PO
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                @else
-                                                    <p class="mt-1 text-xs font-semibold text-indigo-600 break-all">{{ $poNumber }}</p>
-                                                    <a href="{{ route('admin.orders.po.preview', [$order, $vendor]) }}" class="mt-3 inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-indigo-700">
-                                                        Preview Surat PO
+                                        @forelse($order->pos as $po)
+                                            <div class="rounded-xl border border-gray-100 p-4 bg-slate-50/50">
+                                                <p class="text-sm font-medium text-gray-900">{{ $po->vendor_name }}</p>
+                                                <div class="mt-2 flex flex-col gap-1.5">
+                                                    <a href="{{ route('admin.ransum.po.serve_saved', $po->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
+                                                        {{ $po->po_number }}
+                                                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                                     </a>
-                                                @endif
+                                                    
+                                                    <div class="flex items-center gap-1 mt-1">
+                                                        <form method="POST" action="{{ route('admin.ransum.po.update_status', $po->id) }}" class="inline-flex gap-1 status-update-form">
+                                                            @csrf
+                                                            <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
+                                                            <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
+                                                            <button type="submit" name="status" value="selesai" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'selesai' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Selesai</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </div>
                                         @empty
                                             <div class="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-400">
-                                                Belum ada vendor untuk dibuatkan surat PO.
+                                                Belum ada PO yang dibuat.
                                             </div>
                                         @endforelse
                                     </div>
