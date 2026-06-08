@@ -91,6 +91,10 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::post('ransum/{id}/list/download', [RansumController::class, 'downloadListPdf'])->name('ransum.list.download');
     Route::get('ransum/{id}/po', [RansumController::class, 'poPreview'])->name('ransum.po.preview');
     Route::post('ransum/{id}/po/{supplierKey}/download', [RansumController::class, 'downloadRansumPo'])->name('ransum.po.download');
+    Route::get('ransum/po/saved/{id}', [RansumController::class, 'serveSavedPoPdf'])->name('ransum.po.serve_saved');
+    Route::get('ransum/po/saved/{id}/stream', [RansumController::class, 'streamSavedPoPdf'])->name('ransum.po.stream_saved');
+    Route::get('ransum/po/saved/{id}/download', [RansumController::class, 'downloadSavedPoPdf'])->name('ransum.po.download_saved');
+    Route::post('ransum/po/{id}/status', [RansumController::class, 'updatePoStatus'])->name('ransum.po.update_status');
 
     Route::resource('vendors', VendorController::class)->except(['show']);
     Route::resource('products', ProductController::class)->except(['show']);
@@ -101,6 +105,10 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admi
     Route::get('orders/{order}/invoice', [AdminOrderController::class, 'downloadInvoice'])->name('orders.invoice');
     Route::get('orders/{order}/po/{vendor}', [AdminOrderController::class, 'poPreview'])->name('orders.po.preview');
     Route::post('orders/{order}/po/{vendor}/download', [AdminOrderController::class, 'downloadPo'])->name('orders.po.download');
+    Route::get('orders/po/saved/{id}', [AdminOrderController::class, 'serveSavedPoPdf'])->name('orders.po.serve_saved');
+    Route::get('orders/po/saved/{id}/stream', [AdminOrderController::class, 'streamSavedPoPdf'])->name('orders.po.stream_saved');
+    Route::get('orders/po/saved/{id}/download', [AdminOrderController::class, 'downloadSavedPoPdf'])->name('orders.po.download_saved');
+    Route::post('orders/po/{id}/status', [AdminOrderController::class, 'updatePoStatus'])->name('orders.po.update_status');
 
     // Users
     Route::get('users', [AdminUserController::class, 'index'])->name('users.index');

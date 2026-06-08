@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <title>Purchase Order - {{ $po_number ?? ('PO-' . str_pad($order->id, 5, '0', STR_PAD_LEFT)) }}</title>
     <style>
-        @page { size: A4 portrait; margin: 28px 32px; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #111827; line-height: 1.35; }
+        @page { size: A4 portrait; margin: 0px; }
+        html, h1, h2, h3, p, table, tr, td, th, div { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #111827; line-height: 1.35; margin: 28px 32px; }
 
         .header-company { font-size: 17px; font-weight: bold; color: #1e3a5f; }
         .header-sub     { font-size: 10px; color: #6b7280; margin-top: 2px; }

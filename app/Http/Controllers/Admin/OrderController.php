@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\RansumUpload;
 use App\Models\Vendor;
+use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -16,17 +17,49 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with('user', 'ship', 'items.product.vendor')->latest()->get();
-        $ransumOrders = RansumUpload::whereNotNull('no_do')
+        $orders = Order::with('user', 'ship', 'items.product.vendor', 'pos')->latest()->get();
+        $ransumOrders = RansumUpload::with('pos', 'items')
+            ->whereNotNull('no_do')
             ->where('no_do', '!=', '')
             ->orderByDesc('created_at')
             ->get();
+
+        // Group Ransum items by vendor name in a single efficient query
+        $codes = $ransumOrders->flatMap(fn($r) => $r->items->pluck('kode_item'))
+            ->map(fn($c) => strtoupper(trim((string) $c)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $productsByCode = collect();
+        if ($codes->isNotEmpty()) {
+            $productsByCode = Product::with('vendor')
+                ->whereIn('kode', $codes)
+                ->get()
+                ->keyBy(fn($p) => strtoupper(trim((string) $p->kode)));
+        }
+
+        foreach ($ransumOrders as $ransum) {
+            $grouped = [];
+            foreach ($ransum->items as $item) {
+                $normalizedCode = strtoupper(trim((string) $item->kode_item));
+                $product = $normalizedCode !== '' ? $productsByCode->get($normalizedCode) : null;
+                $vendorName = ($product && $product->vendor) ? trim((string) $product->vendor->name) : 'UNKNOWN';
+                if ($vendorName === '') {
+                    $vendorName = 'UNKNOWN';
+                }
+                $grouped[$vendorName][] = $item;
+            }
+            ksort($grouped);
+            $ransum->grouped_items_by_vendor = $grouped;
+        }
+
         return view('admin.orders.index', compact('orders', 'ransumOrders'));
     }
 
     public function show(Order $order)
     {
-        $order->load('user', 'ship', 'items.product.vendor');
+        $order->load('user', 'ship', 'items.product.vendor', 'pos');
         return view('admin.orders.show', compact('order'));
     }
 
@@ -56,7 +89,7 @@ class OrderController extends Controller
     public function poPreview(Order $order, Vendor $vendor)
     {
         $order->load('user', 'ship', 'items.product.vendor');
-        $items = $order->items->filter(fn($item) => $item->product?->vendor_id === $vendor->id)->values();
+        $items = $order->items->filter(fn($item) => $item->product?->vendor_id == $vendor->id)->values();
 
         if ($items->isEmpty()) {
             return redirect()->route('admin.orders.index')
@@ -69,7 +102,7 @@ class OrderController extends Controller
 public function downloadPo(Request $request, Order $order, Vendor $vendor)
     {
         $order->load('user', 'ship', 'items.product.vendor');
-        $items = $order->items->filter(fn($item) => $item->product?->vendor_id === $vendor->id)->values();
+        $items = $order->items->filter(fn($item) => $item->product?->vendor_id == $vendor->id)->values();
 
         if ($items->isEmpty()) {
             return redirect()->route('admin.orders.index')
@@ -125,6 +158,81 @@ public function downloadPo(Request $request, Order $order, Vendor $vendor)
 
         $filename = 'PO-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '-' . Str::slug($vendor->name) . '.pdf';
 
+        // Save PDF to storage
+        $pdfDir = storage_path('app/private/order_pos');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($pdfDir, 0755);
+        \Illuminate\Support\Facades\File::put($pdfDir . '/' . $filename, $pdf->output());
+
+        // Create or update OrderPo record
+        \App\Models\OrderPo::updateOrCreate(
+            [
+                'order_id' => $order->id,
+                'vendor_id' => $vendor->id,
+            ],
+            [
+                'po_number' => $request->input('po_number', 'PO-' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '-' . $vendor->id),
+                'pdf_path' => $filename,
+            ]
+        );
+
         return $pdf->download($filename);
+    }
+
+    public function serveSavedPoPdf(int $id)
+    {
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $fullPath = storage_path('app/private/order_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return view('admin.po_saved_preview', [
+            'poNumber' => $po->po_number,
+            'streamUrl' => route('admin.orders.po.stream_saved', $po->id),
+            'downloadUrl' => route('admin.orders.po.download_saved', $po->id),
+            'backUrl' => route('admin.orders.index'),
+        ]);
+    }
+
+    public function streamSavedPoPdf(int $id)
+    {
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $fullPath = storage_path('app/private/order_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->file($fullPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline'
+        ]);
+    }
+
+    public function downloadSavedPoPdf(int $id)
+    {
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $fullPath = storage_path('app/private/order_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->download($fullPath, $po->pdf_path);
+    }
+
+    public function updatePoStatus(Request $request, int $id)
+    {
+        $request->validate([
+            'status' => ['required', 'string', 'in:menunggu,diproses,selesai'],
+        ]);
+
+        $po = \App\Models\OrderPo::findOrFail($id);
+        $po->update([
+            'status' => $request->input('status')
+        ]);
+
+        return back()->with('success', 'Status PO berhasil diperbarui.');
     }
 }

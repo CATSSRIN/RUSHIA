@@ -73,8 +73,8 @@
 
     {{-- Header --}}
     <div class="text-center">
-        <div class="header-title text-blue">PT Andalan Maritim Sejahtera</div>
-        <div class="header-addr">Aloon - Aloon Priok Nomor 27, Perak Barat, Krembangan, Kota Surabaya, Jawa Timur 60177</div>
+        <div class="header-title text-blue">{{ $headerTitle }}</div>
+        <div class="header-addr">{{ $headerAddress }}</div>
     </div>
     <div class="line-blue"></div>
 
@@ -84,21 +84,20 @@
     <table class="meta-table">
         <tr>
             <td width="55%">
-                <div class="bold" style="margin-bottom: 3px;">Andalan Maritim Sejahtera, PT</div>
-                <div>Aloon-Aloon Priok No. 27</div>
-                <div>Perak Barat, Krembangan</div>
-                <div>Kota Surabaya, Provinsi Jawa Timur 60177</div>
+                <div class="bold" style="margin-bottom: 3px;">{{ $senderCompany }}</div>
+                <div>{{ $senderAddress1 }}</div>
+                <div>{{ $senderAddress2 }}</div>
+                <div>{{ $senderAddress3 }}</div>
 
-                <div style="margin-top: 15px;">Bill To:</div>
-                <div class="bold" style="margin-bottom: 3px;">PT. MERATUS LINE</div>
-                <div style="font-size: 10px; line-height: 1.4;">JL ALOON-ALOON PRIOK NO.27 RT 006 RW 008, PERAK<br>BARAT, KREMBANGAN , KOTA SURABAYA, JAWA TIMUR</div>
+                <div style="margin-top: 15px;">{{ $billToTitle }}</div>
+                <div class="bold" style="margin-bottom: 3px;">{{ $billToCompany }}</div>
+                <div style="font-size: 10px; line-height: 1.4;">{!! nl2br(e($billToAddress)) !!}</div>
             </td>
             <td width="45%">
                 <table width="100%">
                     <tr>
                         <td class="text-right" width="45%">Invoice Number :</td>
                         <td width="55%">
-                            {{-- Warna background dihapus, murni text bold saja --}}
                             <div style="font-weight: bold;">
                                 {{ $invoiceNumber }}
                             </div>
@@ -107,19 +106,19 @@
                     
                     <tr>
                         <td class="text-right">Invoice Date :</td>
-                        <td>{{ \Carbon\Carbon::parse($invoiceDate)->format('d F Y') }}</td>
+                        <td>{{ $invoiceDate }}</td>
                     </tr>
                     <tr>
                         <td class="text-right">Tanggal Pemesanan :</td>
-                        <td>{{ $upload->tanggal_pemesanan ?? \Carbon\Carbon::parse($invoiceDate)->subDays(4)->format('d F Y') }}</td>
+                        <td>{{ $tanggalPemesanan }}</td>
                     </tr>
                     <tr>
                         <td class="text-right">Tanggal Pengiriman :</td>
-                        <td>{{ $upload->tanggal_pengiriman ?? \Carbon\Carbon::parse($invoiceDate)->format('d F Y') }}</td>
+                        <td>{{ $tanggalPengiriman }}</td>
                     </tr>
                     <tr>
                         <td class="text-right">No. Surat Jalan/DO :</td>
-                        <td>{{ $upload->no_do ?? '009/DO-AMS-LBJ/III/2026' }}</td>
+                        <td>{{ $noDo }}</td>
                     </tr>
                 </table>
             </td>
@@ -138,45 +137,59 @@
         <tbody>
             <tr>
                 <td class="text-center border-none-bottom">1</td>
-                <td class="border-none-bottom">Pembelian Ransum Vessel &nbsp;{{ strtoupper($upload->vessel_name) }}</td>
+                <td class="border-none-bottom">{{ $description1 }}</td>
                 <td class="border-none-bottom">
                     <table class="amount-wrap">
                         <tr>
                             <td width="15%">Rp</td>
-                            <td width="85%" class="text-right">{{ number_format($upload->total_belanja_ransum, 0, '.', ',') }}</td>
+                            <td width="85%" class="text-right">{{ number_format($amount1, 0, '.', ',') }}</td>
                         </tr>
                     </table>
                 </td>
             </tr>
             <tr>
                 <td class="text-center border-none-bottom border-none-top">2</td>
-                <td class="border-none-bottom border-none-top">No. PO  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->po_number ?? '000' }}</td>
+                <td class="border-none-bottom border-none-top">{!! str_replace('&nbsp;', ' ', $description2) !!}</td>
                 <td class="border-none-bottom border-none-top"></td>
             </tr>
             <tr>
                 <td class="text-center border-none-bottom border-none-top">3</td>
-                <td class="border-none-bottom border-none-top">Voy  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->voyage ?? '-' }}</td>
+                <td class="border-none-bottom border-none-top">{!! str_replace('&nbsp;', ' ', $description3) !!}</td>
                 <td class="border-none-bottom border-none-top"></td>
             </tr>
             <tr>
-                <td class="text-center border-none-top" style="height: 120px;">4</td>
-                <td class="border-none-top">Port  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $upload->port_tujuan ?? '-' }}</td>
-                <td class="border-none-top"></td>
+                <td class="text-center border-none-top {{ $enableBiayaTambahan ? 'border-none-bottom' : '' }}" style="height: {{ $enableBiayaTambahan ? '70px' : '120px' }};">4</td>
+                <td class="{{ $enableBiayaTambahan ? 'border-none-bottom' : '' }} border-none-top">{!! str_replace('&nbsp;', ' ', $description4) !!}</td>
+                <td class="{{ $enableBiayaTambahan ? 'border-none-bottom' : '' }} border-none-top"></td>
             </tr>
+            @if($enableBiayaTambahan)
+            <tr>
+                <td class="text-center border-none-top">5</td>
+                <td class="border-none-top">{{ $biayaTambahanDesc }}</td>
+                <td class="border-none-top">
+                    <table class="amount-wrap">
+                        <tr>
+                            <td width="15%">Rp</td>
+                            <td width="85%" class="text-right">{{ number_format($biayaTambahanAmount, 0, '.', ',') }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            @endif
             <tr>
                 <td colspan="2" class="text-right bold">TOTAL :</td>
                 <td class="bold">
                     <table class="amount-wrap">
                         <tr>
                             <td width="15%">Rp</td>
-                            <td width="85%" class="text-right">{{ number_format($upload->total_belanja_ransum, 0, '.', ',') }}</td>
+                            <td width="85%" class="text-right">{{ number_format($totalAmount, 0, '.', ',') }}</td>
                         </tr>
                     </table>
                 </td>
             </tr>
             <tr>
                 <td colspan="3" style="padding: 6px 8px; border: 1px solid #000;">
-                    Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <i>{{ $teksTerbilang ?? '#ERROR!' }}</i>
+                    Says &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <i>{{ $saysText }}</i>
                 </td>
             </tr>
         </tbody>
@@ -185,16 +198,16 @@
     {{-- Detail Pembayaran & TTD --}}
     <div>
         <div class="payment-info">
-            Paid to  :<br>
-            ANDALAN MARITIM SEJAHTERA, PT<br>
-            Bank Mandiri<br>
-            KCP Surabaya Tanjung Perak<br>
-            A/C No  : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;140-05-8808889-9 &nbsp;IDR
+            {!! str_replace('&nbsp;', ' ', $paymentPaidTo) !!}<br>
+            {{ $paymentCompany }}<br>
+            {{ $paymentBank }}<br>
+            {{ $paymentBranch }}<br>
+            {!! str_replace('&nbsp;', ' ', $paymentAccount) !!}
         </div>
         
         <div class="signature">
             <br><br><br><br><br>
-            <span style="text-decoration: underline;">Irwinsyah</span>
+            <span style="text-decoration: underline;">{{ $signatureName }}</span>
         </div>
         <div style="clear: both;"></div>
     </div>

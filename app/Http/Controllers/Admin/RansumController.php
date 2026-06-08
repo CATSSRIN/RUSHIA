@@ -509,13 +509,53 @@ class RansumController extends Controller
             $grouped[$sec][] = $item;
         }
 
-        $teksTerbilang = $this->terbilang($upload->total_belanja_ransum);
-        $invoiceNumber = $request->input('invoice_number', 'INV-' . str_pad($upload->id, 6, '0', STR_PAD_LEFT));
-        $invoiceDate   = $request->input('invoice_date', now()->format('Y-m-d'));
-        $notes         = $request->input('notes', '');
+        $invoiceNumber = $request->input('invoice_number', 'INV-AMS-' . str_pad($upload->id, 5, '0', STR_PAD_LEFT));
+        $invoiceDate   = $request->input('invoice_date', now()->format('d F Y'));
+        
+        $headerTitle   = $request->input('header_title', 'PT Andalan Maritim Sejahtera');
+        $headerAddress = $request->input('header_address', 'Aloon - Aloon Priok Nomor 27, Perak Barat, Krembangan, Kota Surabaya, Jawa Timur 60177');
+        
+        $senderCompany  = $request->input('sender_company', 'Andalan Maritim Sejahtera, PT');
+        $senderAddress1 = $request->input('sender_address_1', 'Aloon-Aloon Priok No. 27');
+        $senderAddress2 = $request->input('sender_address_2', 'Perak Barat, Krembangan');
+        $senderAddress3 = $request->input('sender_address_3', 'Kota Surabaya, Provinsi Jawa Timur 60177');
+        
+        $billToTitle   = $request->input('bill_to_title', 'Bill To:');
+        $billToCompany = $request->input('bill_to_company', 'PT. MERATUS LINE');
+        $billToAddress = $request->input('bill_to_address', "JL ALOON-ALOON PRIOK NO.27 RT 006 RW 008, PERAK\nBARAT, KREMBANGAN , KOTA SURABAYA, JAWA TIMUR");
+        
+        $tanggalPemesanan = $request->input('tanggal_pemesanan', $upload->tanggal_pemesanan ?? now()->subDays(4)->format('d F Y'));
+        $tanggalPengiriman = $request->input('tanggal_pengiriman', $upload->tanggal_pengiriman ?? now()->format('d F Y'));
+        $noDo            = $request->input('no_do', $upload->no_do ?? '009/DO-AMS-LBJ/III/2026');
+        
+        $description1    = $request->input('description_1', 'Pembelian Ransum Vessel ' . strtoupper($upload->vessel_name));
+        $amount1         = (float) $request->input('amount_1', $upload->total_belanja_ransum);
+        $description2    = $request->input('description_2', 'No. PO * :        ' . ($upload->po_number ?? '000'));
+        $description3    = $request->input('description_3', 'Voy * :           ' . ($upload->voyage ?? '-'));
+        $description4    = $request->input('description_4', 'Port * :          ' . ($upload->port_tujuan ?? '-'));
+        
+        $enableBiayaTambahan = $request->boolean('enable_biaya_tambahan');
+        $biayaTambahanDesc   = $request->input('biaya_tambahan_desc', 'Biaya Tambahan / Kelebihan Biaya');
+        $biayaTambahanAmount = $enableBiayaTambahan ? (float) $request->input('biaya_tambahan_amount', 0) : 0;
+        
+        $totalAmount   = $amount1 + $biayaTambahanAmount;
+        $saysText      = $request->input('says_text', $this->terbilang($totalAmount));
+        
+        $paymentPaidTo = $request->input('payment_paid_to', 'Paid to * :');
+        $paymentCompany = $request->input('payment_company', 'ANDALAN MARITIM SEJAHTERA, PT');
+        $paymentBank   = $request->input('payment_bank', 'Bank Mandiri');
+        $paymentBranch = $request->input('payment_branch', 'KCP Surabaya Tanjung Perak');
+        $paymentAccount = $request->input('payment_account', 'A/C No * :      140-05-8808889-9  IDR');
+        $signatureName = $request->input('signature_name', 'Irwinsyah');
 
-        $pdf = Pdf::loadView('admin.ransum.invoice_pdf', compact('upload', 'grouped', 'invoiceNumber', 'invoiceDate', 'notes', 'teksTerbilang'))
-            ->setPaper('a4', 'potrait');
+        $pdf = Pdf::loadView('admin.ransum.invoice_pdf', compact(
+            'upload', 'grouped', 'invoiceNumber', 'invoiceDate',
+            'headerTitle', 'headerAddress', 'senderCompany', 'senderAddress1', 'senderAddress2', 'senderAddress3',
+            'billToTitle', 'billToCompany', 'billToAddress', 'tanggalPemesanan', 'tanggalPengiriman', 'noDo',
+            'description1', 'amount1', 'description2', 'description3', 'description4',
+            'enableBiayaTambahan', 'biayaTambahanDesc', 'biayaTambahanAmount', 'totalAmount', 'saysText',
+            'paymentPaidTo', 'paymentCompany', 'paymentBank', 'paymentBranch', 'paymentAccount', 'signatureName'
+        ))->setPaper('a4', 'portrait');
 
         $filename = 'invoice-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
 
@@ -761,10 +801,10 @@ class RansumController extends Controller
                 'items' => $item->items,
                 'merk_spec' => $item->merk_spec,
                 'supplier' => $supplierName,
-                'ams_harga_jual' => $baseBeli,
-                'ams_satuan' => $baseJual . ($satuan ? ' ' . $satuan : ''),
+                'ams_harga_jual' => $baseJual,
+                'ams_satuan' => $satuan,
                 'qty' => $qty,
-                'pemesanan_harga_beli' => $totalBeli,
+                'pemesanan_harga_beli' => $totalJual,
                 'pemesanan_harga_jual' => $totalJual,
                 'remarks' => $item->ket_remarks,
             ];
@@ -895,6 +935,24 @@ public function downloadRansumPo(Request $request, int $id, string $supplierKey)
             ->setPaper('a4', 'portrait');
 
         $filename = 'PO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '-' . $supplierKey . '.pdf';
+
+        // Save PDF to storage
+        $pdfDir = storage_path('app/private/ransum_pos');
+        File::ensureDirectoryExists($pdfDir, 0755);
+        File::put($pdfDir . '/' . $filename, $pdf->output());
+
+        // Create or update RansumPo record
+        \App\Models\RansumPo::updateOrCreate(
+            [
+                'ransum_upload_id' => $upload->id,
+                'supplier_key' => $supplierKey,
+            ],
+            [
+                'vendor_name' => $formData['vendor_name'] ?? $supplierName,
+                'po_number' => $formData['po_number'] ?? ('PO-' . $upload->id . '-' . $supplierKey),
+                'pdf_path' => $filename,
+            ]
+        );
 
         return $pdf->download($filename);
     }
@@ -1052,5 +1110,63 @@ public function downloadRansumPo(Request $request, int $id, string $supplierKey)
         $normalized = strtoupper(trim((string) $code));
 
         return $normalized !== '' ? $normalized : null;
+    }
+
+    public function serveSavedPoPdf(int $id)
+    {
+        $po = \App\Models\RansumPo::findOrFail($id);
+        $fullPath = storage_path('app/private/ransum_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return view('admin.po_saved_preview', [
+            'poNumber' => $po->po_number,
+            'streamUrl' => route('admin.ransum.po.stream_saved', $po->id),
+            'downloadUrl' => route('admin.ransum.po.download_saved', $po->id),
+            'backUrl' => route('admin.orders.index'),
+        ]);
+    }
+
+    public function streamSavedPoPdf(int $id)
+    {
+        $po = \App\Models\RansumPo::findOrFail($id);
+        $fullPath = storage_path('app/private/ransum_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->file($fullPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline'
+        ]);
+    }
+
+    public function downloadSavedPoPdf(int $id)
+    {
+        $po = \App\Models\RansumPo::findOrFail($id);
+        $fullPath = storage_path('app/private/ransum_pos/' . $po->pdf_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404);
+        }
+
+        return response()->download($fullPath, $po->pdf_path);
+    }
+
+    public function updatePoStatus(Request $request, int $id)
+    {
+        $request->validate([
+            'status' => ['required', 'string', 'in:menunggu,diproses,selesai'],
+        ]);
+
+        $po = \App\Models\RansumPo::findOrFail($id);
+        $po->update([
+            'status' => $request->input('status')
+        ]);
+
+        return back()->with('success', 'Status PO berhasil diperbarui.');
     }
 }

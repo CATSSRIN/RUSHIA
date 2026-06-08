@@ -75,4 +75,9 @@ class RansumUpload extends Model
     {
         return $this->hasMany(RansumItem::class);
     }
+
+    public function pos(): HasMany
+    {
+        return $this->hasMany(RansumPo::class);
+    }
 }

@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <title>Purchase Order – {{ request('vendor_name') ?? $supplierName }}</title>
     <style>
-        @page { size: A4 portrait; margin: 30px; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.3; }
+        @page { size: A4 portrait; margin: 0px; }
+        html, h1, h2, h3, p, table, tr, td, th, div { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.45; margin: 40px 45px; }
 
         /* Master Table Class */
-        .excel-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .excel-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         .excel-table th, .excel-table td { border: 1px solid #000; }
         
         /* Helper Classes */
@@ -17,7 +17,7 @@
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
-        .p-1 { padding: 4px 6px; }
+        .p-1 { padding: 6px 8px; }
         .align-top { vertical-align: top; }
         .border-none { border: none !important; }
         .border-bottom { border-bottom: 1px solid #000 !important; }
@@ -25,7 +25,7 @@
         
         /* Specific Inner Tables */
         .inner-table { width: 100%; border-collapse: collapse; border: none; }
-        .inner-table td { border: none; padding: 4px 6px; }
+        .inner-table td { border: none; padding: 5px 8px; }
     </style>
 </head>
 <body>
@@ -63,7 +63,7 @@
     @endphp
 
     {{-- Header Title --}}
-    <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 5px;">
+    <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 15px;">
         <tr>
             <td style="width: 50%; font-size: 16px; font-weight: bold; border: none;">PURCHASE ORDER</td>
             <td style="width: 50%; font-size: 16px; font-weight: bold; border: none; padding-left: 20px;">PT ANDALAN MARITIM SEJAHTERA</td>
