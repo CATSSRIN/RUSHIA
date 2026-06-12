@@ -34,9 +34,39 @@ class RansumController extends Controller
 
     public function index()
     {
-        $uploads = RansumUpload::with('uploader')
+        $uploads = RansumUpload::with('uploader', 'pos', 'items')
             ->orderByDesc('created_at')
             ->get();
+
+        // Group Ransum items by vendor name in a single efficient query
+        $codes = $uploads->flatMap(fn($u) => $u->items->pluck('kode_item'))
+            ->map(fn($c) => strtoupper(trim((string) $c)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $productsByCode = collect();
+        if ($codes->isNotEmpty()) {
+            $productsByCode = Product::with('vendor')
+                ->whereIn('kode', $codes)
+                ->get()
+                ->keyBy(fn($p) => strtoupper(trim((string) $p->kode)));
+        }
+
+        foreach ($uploads as $upload) {
+            $grouped = [];
+            foreach ($upload->items as $item) {
+                $normalizedCode = strtoupper(trim((string) $item->kode_item));
+                $product = $normalizedCode !== '' ? $productsByCode->get($normalizedCode) : null;
+                $vendorName = ($product && $product->vendor) ? trim((string) $product->vendor->name) : 'UNKNOWN';
+                if ($vendorName === '') {
+                    $vendorName = 'UNKNOWN';
+                }
+                $grouped[$vendorName][] = $item;
+            }
+            ksort($grouped);
+            $upload->grouped_items_by_vendor = $grouped;
+        }
 
         return view('admin.ransum.index', compact('uploads'));
     }
@@ -1166,6 +1196,14 @@ public function downloadRansumPo(Request $request, int $id, string $supplierKey)
         $po->update([
             'status' => $request->input('status')
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $po->status,
+                'message' => 'Status PO berhasil diperbarui.'
+            ]);
+        }
 
         return back()->with('success', 'Status PO berhasil diperbarui.');
     }

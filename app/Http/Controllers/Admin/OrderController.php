@@ -66,6 +66,15 @@ class OrderController extends Controller
     public function updateStatus(Order $order, string $status)
     {
         $order->update(['status' => $status]);
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $order->status,
+                'message' => 'Order status updated.'
+            ]);
+        }
+
         return back()->with('success', 'Order status updated.');
     }
 
@@ -232,6 +241,14 @@ public function downloadPo(Request $request, Order $order, Vendor $vendor)
         $po->update([
             'status' => $request->input('status')
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $po->status,
+                'message' => 'Status PO berhasil diperbarui.'
+            ]);
+        }
 
         return back()->with('success', 'Status PO berhasil diperbarui.');
     }

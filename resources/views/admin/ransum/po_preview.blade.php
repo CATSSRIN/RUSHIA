@@ -22,6 +22,18 @@
                 Barang telah dikategorikan per vendor. Anda bisa langsung mengedit kolom seperti format Excel di bawah ini.
             </div>
 
+            @php 
+                $savedPoCount = $upload->pos->count();
+            @endphp
+            @if($savedPoCount > 0)
+                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center gap-2 text-sm shadow-sm">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Terdapat <strong>{{ $savedPoCount }}</strong> dokumen PO yang telah tersimpan di sistem untuk order ini.</span>
+                </div>
+            @endif
+
             @if(empty($grouped))
                 <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
                     <p class="text-gray-400">{{ __('Tidak ada item pada data ini.') }}</p>
@@ -279,5 +291,14 @@
             });
         })('{{ $vendorSlug }}');
         @endforeach
+
+        // Auto-reload the page after submitting a PO form (since target is _blank, it downloads/views in a new tab)
+        document.querySelectorAll('.po-form').forEach(function(form) {
+            form.addEventListener('submit', function() {
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            });
+        });
     </script>
 </x-app-layout>
