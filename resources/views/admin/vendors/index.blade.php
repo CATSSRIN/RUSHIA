@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Vendors') }}</h2>
-            <a href="{{ route('admin.vendors.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+            <a href="{{ route('admin.vendors.create') }}" class="inline-flex items-center px-4 py-2 bg-[#217a68] hover:bg-[#1b6455] text-white text-sm font-medium rounded-lg transition shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 {{ __('Add Vendor') }}
             </a>
@@ -44,11 +44,15 @@
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600">{{ $vendor->products_count }}</td>
                                 <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <a href="{{ route('admin.vendors.edit', $vendor) }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('Edit') }}</a>
-                                        <form method="POST" action="{{ route('admin.vendors.destroy', $vendor) }}" onsubmit="return confirm('{{ __('Delete this vendor?') }}')">
+                                    <div class="flex justify-end items-center gap-2">
+                                        <a href="{{ route('admin.vendors.edit', $vendor) }}" class="inline-flex items-center justify-center rounded-lg border border-[#217a68]/20 bg-[#217a68]/5 px-3 py-1.5 text-xs font-bold text-[#217a68] hover:bg-[#217a68]/10 transition shadow-sm gap-1">
+                                            {{ __('Edit') }}
+                                        </a>
+                                        <form method="POST" action="{{ route('admin.vendors.destroy', $vendor) }}" onsubmit="return confirm('{{ __('Delete this vendor?') }}')" class="inline-block">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-medium">{{ __('Delete') }}</button>
+                                            <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 transition shadow-sm gap-1">
+                                                {{ __('Delete') }}
+                                            </button>
                                         </form>
                                     </div>
                                 </td>
