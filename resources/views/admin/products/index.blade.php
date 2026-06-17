@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Products') }}</h2>
-            <a href="{{ route('admin.products.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+            <a href="{{ route('admin.products.create') }}" class="inline-flex items-center px-4 py-2 bg-[#217a68] hover:bg-[#1b6455] text-white text-sm font-medium rounded-lg transition shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 {{ __('Add Product') }}
             </a>
@@ -25,7 +25,7 @@
                         placeholder="{{ __('Search product, code, or vendor...') }}"
                         class="flex-1 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                     />
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">{{ __('Search') }}</button>
+                    <button type="submit" class="px-4 py-2 bg-[#217a68] hover:bg-[#1b6455] text-white text-sm font-medium rounded-lg transition shadow-sm">{{ __('Search') }}</button>
                     @if($search)
                         <a href="{{ route('admin.products.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition">{{ __('Clear') }}</a>
                     @endif
@@ -39,7 +39,7 @@
             @else
                 @foreach($products as $vendorName => $vendorProducts)
                 <div class="mb-8">
-                    <h3 class="text-sm font-semibold text-indigo-700 uppercase tracking-wide mb-2 px-1">{{ $vendorName }}</h3>
+                    <h3 class="text-sm font-bold text-[#217a68] uppercase tracking-wide mb-2 px-1">{{ $vendorName }}</h3>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-100">
@@ -87,11 +87,15 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-4 text-right">
-                                        <div class="flex justify-end gap-2">
-                                            <a href="{{ route('admin.products.edit', $product) }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">{{ __('Edit') }}</a>
-                                            <form method="POST" action="{{ route('admin.products.destroy', $product) }}" onsubmit="return confirm('{{ __('Delete this product?') }}')">
+                                        <div class="flex justify-end items-center gap-2">
+                                            <a href="{{ route('admin.products.edit', $product) }}" class="inline-flex items-center justify-center rounded-lg border border-[#217a68]/20 bg-[#217a68]/5 px-3 py-1.5 text-xs font-bold text-[#217a68] hover:bg-[#217a68]/10 transition shadow-sm gap-1">
+                                                {{ __('Edit') }}
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.products.destroy', $product) }}" onsubmit="return confirm('{{ __('Delete this product?') }}')" class="inline-block">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-medium">{{ __('Delete') }}</button>
+                                                <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 transition shadow-sm gap-1">
+                                                    {{ __('Delete') }}
+                                                </button>
                                             </form>
                                         </div>
                                     </td>
