@@ -326,22 +326,22 @@
                                         @endif
                                     </div>
                                     @if($hasGroupedItems && $vendorCount > 0)
-                                        <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                        <div class="space-y-2">
                                             @php $shownVendors = 0; @endphp
                                             @foreach($upload->grouped_items_by_vendor as $vendorName => $items)
                                                 @php $shownVendors++; @endphp
-                                                @if($shownVendors <= 3)
-                                                    <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 rounded-xl px-3.5 py-2 text-xs">
-                                                        <span class="font-semibold text-emerald-950 truncate" title="{{ $vendorName }}">{{ $vendorName }}</span>
-                                                        <span class="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold shrink-0">
+                                                @if($shownVendors <= 6)
+                                                    <div class="flex items-center justify-between bg-slate-50/50 border border-slate-200/60 rounded-xl px-3.5 py-2 text-xs">
+                                                        <span class="font-semibold text-slate-700 truncate" title="{{ $vendorName }}">{{ $vendorName }}</span>
+                                                        <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 font-bold shrink-0">
                                                             {{ count($items) }} item
                                                         </span>
                                                     </div>
                                                 @endif
                                             @endforeach
-                                            @if($vendorCount > 3)
+                                            @if($vendorCount > 6)
                                                 <div class="text-center text-[11px] text-gray-400 font-medium pt-1">
-                                                    + {{ $vendorCount - 3 }} vendor lainnya
+                                                    + {{ $vendorCount - 6 }} vendor lainnya
                                                 </div>
                                             @endif
                                         </div>
