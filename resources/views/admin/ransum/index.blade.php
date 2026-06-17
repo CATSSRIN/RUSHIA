@@ -292,7 +292,7 @@
                                                         <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->currency ?? '-' }}</p>
                                                     </div>
                                                     <div>
-                                                        <p class="text-slate-400 font-medium">Conversi</p>
+                                                        <p class="text-slate-400 font-medium">Konversi</p>
                                                         <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->conversi_rupiah ?? '-' }}</p>
                                                     </div>
                                                     <div>
