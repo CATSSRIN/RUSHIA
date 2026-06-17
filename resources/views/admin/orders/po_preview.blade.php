@@ -1,4 +1,16 @@
 <x-app-layout>
+    @php
+        $poJson = $order->po_number;
+        $poArray = (is_string($poJson) && str_starts_with(trim($poJson), '{')) ? json_decode($poJson, true) : [];
+        $vendorSlug = \Illuminate\Support\Str::slug($vendor->name);
+        $savedPoNumber = $poArray[$vendorSlug] ?? null;
+        if (!$savedPoNumber) {
+            $savedPo = $order->pos->first(fn($p) => $p->vendor_id == $vendor->id);
+            $savedPoNumber = $savedPo ? $savedPo->po_number : null;
+        }
+        $defaultPoNumber = "PO-" . str_pad($order->id, 5, '0', STR_PAD_LEFT) . "-" . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::slug($vendor->name));
+        $displayPoNumber = $savedPoNumber ?? $defaultPoNumber;
+    @endphp
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -19,6 +31,15 @@
                 Semua field pada dokumen dapat diedit langsung. Klik <strong>Download PDF</strong> untuk mengunduh surat PO ini.
             </div>
 
+            @if(!empty($savedPoNumber))
+                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center gap-2 text-sm shadow-sm">
+                    <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Dokumen PO ini telah berhasil dibuat dan disimpan di sistem.</span>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('admin.orders.po.download', [$order, $vendor]) }}" id="po-form">
                 @csrf
 
@@ -37,7 +58,7 @@
                                 <div class="editable-wrap" style="margin-top:4px;">
                                     <span class="field-label">No. PO:</span>
                                     <input type="text" name="po_number"
-                                           value="PO-{{ str_pad($order->id,5,'0',STR_PAD_LEFT) }}-{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::slug($vendor->name)) }}"
+                                           value="{{ $displayPoNumber }}"
                                            class="po-input text-right" style="width:200px; font-weight:600; color:#1e3a5f;">
                                 </div>
                             </td>
@@ -291,5 +312,12 @@
             });
             document.getElementById('grand-total-display').textContent = 'Rp ' + total.toLocaleString('id-ID', {minimumFractionDigits: 0});
         }
+
+        // Auto-reload the page after submitting the PO form (since download keeps user on the same page)
+        document.getElementById('po-form').addEventListener('submit', function() {
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        });
     </script>
 </x-app-layout>

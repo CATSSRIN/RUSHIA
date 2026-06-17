@@ -29,12 +29,14 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        User::create([
+        $u = User::create([
             'name'         => $request->name,
             'email'        => $request->email,
             'password'     => Hash::make($request->password),
             'is_warehouse' => true,
         ]);
+
+        \App\Models\ActivityLog::log('create_warehouse', 'Membuat akun Warehouse baru: ' . $u->name . ' (' . $u->email . ')');
 
         return redirect()->route('admin.warehouses.index')->with('success', 'Warehouse account created successfully.');
     }
@@ -42,6 +44,8 @@ class UserController extends Controller
     public function destroyWarehouse(User $user)
     {
         abort_unless($user->is_warehouse, 404);
+
+        \App\Models\ActivityLog::log('delete_warehouse', 'Menghapus akun Warehouse: ' . $user->name . ' (' . $user->email . ')');
 
         $user->delete();
 
@@ -68,13 +72,15 @@ class UserController extends Controller
             'password'     => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        User::create([
+        $u = User::create([
             'name'         => $request->name,
             'company_name' => $request->company_name,
             'email'        => $request->email,
             'password'     => Hash::make($request->password),
             'is_admin'     => false,
         ]);
+
+        \App\Models\ActivityLog::log('create_user', 'Membuat akun User baru: ' . $u->name . ' (' . $u->email . ')');
 
         return redirect()->route('admin.users.index')->with('success', 'User account created successfully.');
     }
@@ -96,6 +102,8 @@ class UserController extends Controller
         abort_unless($user->is_admin, 404);
         abort_if($user->id === auth()->id(), 403, 'You cannot delete your own admin account.');
 
+        \App\Models\ActivityLog::log('delete_admin', 'Menghapus akun Admin: ' . $user->name . ' (' . $user->email . ')');
+
         $user->delete();
 
         return redirect()->route('admin.admins.index')->with('success', 'Admin account deleted successfully.');
@@ -114,12 +122,14 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        User::create([
+        $u = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
             'is_admin' => true,
         ]);
+
+        \App\Models\ActivityLog::log('create_admin', 'Membuat akun Admin baru: ' . $u->name . ' (' . $u->email . ')');
 
         return redirect()->route('admin.admins.index')->with('success', 'Admin account created successfully.');
     }
@@ -146,11 +156,15 @@ class UserController extends Controller
         }
         $user->save();
 
+        \App\Models\ActivityLog::log('update_user', 'Memperbarui akun User/Admin: ' . $user->name . ' (' . $user->email . ')');
+
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
 
     public function destroy(User $user)
     {
+        \App\Models\ActivityLog::log('delete_user', 'Menghapus akun User: ' . $user->name . ' (' . $user->email . ')');
+
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');

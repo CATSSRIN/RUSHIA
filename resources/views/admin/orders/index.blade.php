@@ -22,22 +22,28 @@
             'cancelled' => 'Dibatalkan',
             'imported' => 'Imported',
         ];
-
-        $summaryTotals = $ransumOrders->reduce(function ($carry, $order) {
-            $carry['total']++;
-            $carry['pending'] += $order->status === 'pending' ? 1 : 0;
-            $carry['confirmed'] += $order->status === 'imported' ? 1 : 0;
-            $carry['delivered'] += $order->status === 'delivered' ? 1 : 0;
-            $carry['value'] += (float) $order->total_belanja_ransum;
-
-            return $carry;
-        }, [
+        $summaryTotals = [
             'total' => 0,
             'pending' => 0,
             'confirmed' => 0,
             'delivered' => 0,
             'value' => 0,
-        ]);
+        ];
+
+        foreach ($ransumOrders as $order) {
+            $summaryTotals['value'] += (float) $order->total_belanja_ransum;
+            foreach ($order->pos as $po) {
+                $summaryTotals['total']++;
+                if ($po->status === 'menunggu') {
+                    $summaryTotals['pending']++;
+                } elseif ($po->status === 'diproses') {
+                    $summaryTotals['confirmed']++;
+                } elseif ($po->status === 'selesai') {
+                    $summaryTotals['delivered']++;
+                }
+            }
+        }
+
 
         $orderSummary = [
             ['label' => 'Total Pesanan', 'value' => $summaryTotals['total'], 'tone' => 'text-slate-900'],
@@ -67,9 +73,19 @@
 
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 @foreach($orderSummary as $summary)
+                    @php
+                        $idMap = [
+                            'Total Pesanan' => 'stat-total-pesanan',
+                            'Menunggu' => 'stat-menunggu',
+                            'Diproses' => 'stat-diproses',
+                            'Selesai' => 'stat-selesai',
+                            'Nilai Pesanan' => 'stat-nilai-pesanan',
+                        ];
+                        $elementId = $idMap[$summary['label']] ?? null;
+                    @endphp
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                         <p class="text-sm text-gray-500">{{ $summary['label'] }}</p>
-                        <p class="mt-2 text-2xl font-semibold {{ $summary['tone'] }}">{{ $summary['value'] }}</p>
+                        <p @if($elementId) id="{{ $elementId }}" @endif class="mt-2 text-2xl font-semibold {{ $summary['tone'] }}">{{ $summary['value'] }}</p>
                     </div>
                 @endforeach
             </div>
@@ -145,152 +161,6 @@
                 </div>
             @endif
 
-            @if($ransumOrders->isEmpty())
-                <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-50 text-gray-300">
-                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7.5h18M6.75 7.5l.68 10.88A2.25 2.25 0 009.67 20.5h4.66a2.25 2.25 0 002.24-2.12l.68-10.88M9.75 11.25v5.25m4.5-5.25v5.25M9 4.5h6a1.5 1.5 0 011.5 1.5v1.5h-9V6A1.5 1.5 0 019 4.5z" />
-                        </svg>
-                    </div>
-                    <h3 class="mt-4 text-lg font-semibold text-gray-700">Belum ada pesanan.</h3>
-                    <p class="mt-2 text-sm text-gray-400">Pesanan yang masuk dari customer akan tampil di halaman ini.</p>
-                </div>
-            @else
-                <div class="space-y-5">
-                    @foreach($ransumOrders as $order)
-                        @php
-                            $poData = is_string($order->po_number) && str_starts_with(trim($order->po_number), '{')
-                                ? json_decode($order->po_number, true)
-                                : [];
-                            $statusClass = $statusClasses[$order->status] ?? 'bg-slate-100 text-slate-700';
-                            $statusLabel = $statusLabels[$order->status] ?? ucfirst($order->status);
-                            $pickupSchedule = $order->delivery_date
-                                ? \Carbon\Carbon::parse($order->delivery_date)->format('d M Y')
-                                : null;
-                        @endphp
-
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white">
-                                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                    <div class="space-y-3">
-                                        <div class="flex flex-wrap items-center gap-3">
-                                            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ $statusLabel }}</span>
-                                            <span class="text-sm text-gray-500">DO #{{ $order->no_do }}</span>
-                                            <span class="text-sm text-gray-400">{{ $order->created_at->format('d M Y · H:i') }}</span>
-                                        </div>
-                                        <div>
-                                            <h3 class="text-lg font-semibold text-gray-900">{{ $order->pemohon }}</h3>
-                                            <p class="text-sm text-gray-500">Kapal {{ $order->vessel_name }} · {{ $order->items->count() }} item</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex flex-wrap gap-2">
-                                        <a href="{{ route('admin.ransum.preview', $order->id) }}" class="inline-flex items-center justify-center rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">Lihat Detail</a>
-                                        <a href="{{ route('admin.ransum.total.preview', $order->id) }}" class="inline-flex items-center justify-center rounded-lg border border-amber-100 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-100">{{ !empty($order->vessel_code) ? $order->vessel_code : 'MM1' }}</a>
-                                        <a href="{{ route('admin.ransum.invoice', $order->id) }}" class="inline-flex items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">Download Invoice</a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="p-6 grid gap-6 xl:grid-cols-[1.1fr_1fr_1fr]">
-                                <div class="space-y-4">
-                                    <div class="grid gap-4 sm:grid-cols-2">
-                                        <div class="rounded-xl bg-slate-50 p-4">
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Pesanan</p>
-                                            <p class="mt-2 text-lg font-semibold text-slate-900">
-                                                @if($order->total_belanja_ransum)
-                                                    Rp {{ number_format($order->total_belanja_ransum, 0, ',', '.') }}
-                                                @else
-                                                    —
-                                                @endif
-                                            </p>
-                                        </div>
-                                        <div class="rounded-xl bg-slate-50 p-4">
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Jadwal Pickup</p>
-                                            <p class="mt-2 text-sm font-medium text-slate-700">{{ $pickupSchedule ?? 'Belum dijadwalkan' }}</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="space-y-3">
-                                        <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Lokasi Pickup</p>
-                                            <p class="mt-1 text-sm text-gray-700">{{ $order->deliver_to ?: 'Belum diisi' }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Captain</p>
-                                            <p class="mt-1 text-sm text-gray-700">{{ $order->captain ?: '-' }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    @php
-                                        $groupedOrderItems = $order->grouped_items_by_vendor ?? [];
-                                    @endphp
-                                    <div class="flex items-center justify-between">
-                                        <h4 class="text-sm font-semibold text-gray-900">Ringkasan Item</h4>
-                                        <span class="text-xs text-gray-400">{{ count($groupedOrderItems) }} vendor</span>
-                                    </div>
-                                    <div class="mt-4 space-y-3">
-                                        @foreach($groupedOrderItems as $vendorName => $items)
-                                            @php
-                                                $vendorSlug = Illuminate\Support\Str::slug($vendorName);
-                                                $hasPo = $order->pos->contains('supplier_key', $vendorSlug);
-                                            @endphp
-                                            <div class="rounded-xl border p-4 transition duration-200 {{ $hasPo ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-gray-100 text-gray-700' }}">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <div>
-                                                        <p class="text-sm font-semibold {{ $hasPo ? 'text-emerald-900' : 'text-gray-900' }}">{{ $vendorName }}</p>
-                                                        <p class="text-xs mt-0.5 {{ $hasPo ? 'text-emerald-600/90' : 'text-gray-400' }}">Supplier Pesanan</p>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $hasPo ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' }}">
-                                                            {{ count($items) }} item
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div class="flex items-center justify-between">
-                                        <h4 class="text-sm font-semibold text-gray-900">Surat PO Vendor</h4>
-                                        <span class="text-xs text-gray-400">{{ $order->pos->count() }} vendor</span>
-                                    </div>
-                                    <div class="mt-4 space-y-3">
-                                        @forelse($order->pos as $po)
-                                            <div class="rounded-xl border border-gray-100 p-4 bg-slate-50/50">
-                                                <p class="text-sm font-medium text-gray-900">{{ $po->vendor_name }}</p>
-                                                <div class="mt-2 flex flex-col gap-1.5">
-                                                    <a href="{{ route('admin.ransum.po.serve_saved', $po->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">
-                                                        {{ $po->po_number }}
-                                                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                                    </a>
-                                                    
-                                                    <div class="flex items-center gap-1 mt-1">
-                                                        <form method="POST" action="{{ route('admin.ransum.po.update_status', $po->id) }}" class="inline-flex gap-1 status-update-form">
-                                                            @csrf
-                                                            <button type="submit" name="status" value="menunggu" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
-                                                            <button type="submit" name="status" value="diproses" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
-                                                            <button type="submit" name="status" value="selesai" class="px-1.5 py-0.5 text-[9px] font-bold rounded transition border {{ $po->status === 'selesai' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Selesai</button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @empty
-                                            <div class="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-400">
-                                                Belum ada PO yang dibuat.
-                                            </div>
-                                        @endforelse
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
 
             {{-- ── Delivery Orders dari Ransum (no_do sudah dibuat) ─────── --}}
             @if($ransumOrders->isNotEmpty())
@@ -457,10 +327,17 @@
                 if (!submitter) return;
 
                 const statusValue = submitter.value;
-                const buttons = form.querySelectorAll('button');
+                
+                // Select all status update forms targeting this specific PO
+                const targetAction = form.action;
+                const relatedForms = document.querySelectorAll(`form[action="${targetAction}"]`);
+                const allRelatedButtons = [];
+                relatedForms.forEach(f => {
+                    allRelatedButtons.push(...f.querySelectorAll('button'));
+                });
 
-                // Disable buttons temporarily
-                buttons.forEach(btn => btn.disabled = true);
+                // Disable all related buttons temporarily
+                allRelatedButtons.forEach(btn => btn.disabled = true);
 
                 const formData = new FormData(form);
                 formData.set('status', statusValue);
@@ -474,7 +351,16 @@
                 })
                 .then(response => {
                     if (response.ok) {
-                        buttons.forEach(btn => {
+                        // Find the old status before updating active button styles
+                        let oldStatus = null;
+                        allRelatedButtons.forEach(btn => {
+                            if (btn.classList.contains('bg-amber-100') || btn.classList.contains('bg-blue-100') || btn.classList.contains('bg-emerald-100')) {
+                                oldStatus = btn.value;
+                            }
+                        });
+
+                        // Update all status buttons for this PO across the page
+                        allRelatedButtons.forEach(btn => {
                             btn.disabled = false;
                             const isClicked = btn.value === statusValue;
                             
@@ -493,13 +379,41 @@
                                 btn.classList.add('bg-white', 'border-gray-200', 'text-gray-500', 'hover:bg-gray-50');
                             }
                         });
+
+                        // Dynamically update stats counters at the top of the page
+                        if (oldStatus && oldStatus !== statusValue) {
+                            const mapStatusToId = {
+                                'menunggu': 'stat-menunggu',
+                                'diproses': 'stat-diproses',
+                                'selesai': 'stat-selesai'
+                            };
+
+                            const oldElId = mapStatusToId[oldStatus];
+                            const newElId = mapStatusToId[statusValue];
+
+                            if (oldElId) {
+                                const oldEl = document.getElementById(oldElId);
+                                if (oldEl) {
+                                    let val = parseInt(oldEl.textContent) || 0;
+                                    oldEl.textContent = Math.max(0, val - 1);
+                                }
+                            }
+
+                            if (newElId) {
+                                const newEl = document.getElementById(newElId);
+                                if (newEl) {
+                                    let val = parseInt(newEl.textContent) || 0;
+                                    newEl.textContent = val + 1;
+                                }
+                            }
+                        }
                     } else {
-                        buttons.forEach(btn => btn.disabled = false);
+                        allRelatedButtons.forEach(btn => btn.disabled = false);
                         alert('Gagal memperbarui status. Silakan coba lagi.');
                     }
                 })
                 .catch(err => {
-                    buttons.forEach(btn => btn.disabled = false);
+                    allRelatedButtons.forEach(btn => btn.disabled = false);
                     alert('Terjadi kesalahan jaringan.');
                 });
             }

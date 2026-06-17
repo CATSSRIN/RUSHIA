@@ -29,7 +29,9 @@ class VendorController extends Controller
             'address' => ['nullable', 'string'],
         ]);
 
-        Vendor::create($request->only('name', 'contact_name', 'email', 'phone', 'address'));
+        $vendor = Vendor::create($request->only('name', 'contact_name', 'email', 'phone', 'address'));
+
+        \App\Models\ActivityLog::log('create_vendor', 'Menambahkan vendor baru: ' . $vendor->name);
 
         return redirect()->route('admin.vendors.index')->with('success', 'Vendor added successfully.');
     }
@@ -51,11 +53,15 @@ class VendorController extends Controller
 
         $vendor->update($request->only('name', 'contact_name', 'email', 'phone', 'address'));
 
+        \App\Models\ActivityLog::log('update_vendor', 'Memperbarui vendor: ' . $vendor->name);
+
         return redirect()->route('admin.vendors.index')->with('success', 'Vendor updated.');
     }
 
     public function destroy(Vendor $vendor)
     {
+        \App\Models\ActivityLog::log('delete_vendor', 'Menghapus vendor: ' . $vendor->name);
+
         $vendor->delete();
         return redirect()->route('admin.vendors.index')->with('success', 'Vendor removed.');
     }

@@ -71,7 +71,7 @@
                 <h3 class="font-semibold text-gray-700 mb-3">{{ __('Update Status') }}</h3>
                 <div class="flex flex-wrap gap-2">
                     @foreach(['pending','confirmed','delivered','cancelled'] as $status)
-                        <form method="POST" action="{{ route('admin.orders.status', [$order, $status]) }}">
+                        <form method="POST" action="{{ route('admin.orders.status', [$order, $status]) }}" class="order-status-form">
                             @csrf @method('PATCH')
                             <button type="submit" class="px-4 py-2 text-sm rounded-lg border transition {{ $order->status === $status ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }} capitalize">{{ $status }}</button>
                         </form>
@@ -109,7 +109,7 @@
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Status PO:</p>
                                         <div class="flex items-center gap-1 mt-1">
-                                            <form method="POST" action="{{ route('admin.orders.po.update_status', $savedPo->id) }}" class="inline-flex gap-1">
+                                            <form method="POST" action="{{ route('admin.orders.po.update_status', $savedPo->id) }}" class="inline-flex gap-1 status-update-form">
                                                 @csrf
                                                 <button type="submit" name="status" value="menunggu" class="px-2 py-1 text-xs font-semibold rounded-md transition border {{ $savedPo->status === 'menunggu' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Menunggu</button>
                                                 <button type="submit" name="status" value="diproses" class="px-2 py-1 text-xs font-semibold rounded-md transition border {{ $savedPo->status === 'diproses' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50' }}">Diproses</button>
@@ -180,4 +180,115 @@
             </div>
         </div>
     </div>
+    <script>
+        let clickedButton = null;
+        document.addEventListener('click', function(event) {
+            if (event.target.tagName === 'BUTTON' && event.target.type === 'submit') {
+                clickedButton = event.target;
+            }
+        });
+
+        document.addEventListener('submit', function (event) {
+            const form = event.target;
+            
+            // Order Status Form AJAX
+            if (form.classList.contains('order-status-form')) {
+                event.preventDefault();
+
+                const submitter = event.submitter || clickedButton;
+                if (!submitter) return;
+
+                const statusValue = form.action.split('/').pop();
+                const allButtons = form.closest('.flex-wrap').querySelectorAll('button');
+
+                allButtons.forEach(btn => btn.disabled = true);
+
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        allButtons.forEach(btn => {
+                            btn.disabled = false;
+                            const btnText = btn.textContent.trim().toLowerCase();
+                            const isClicked = btnText === statusValue;
+                            
+                            btn.className = 'px-4 py-2 text-sm rounded-lg border transition capitalize';
+                            if (isClicked) {
+                                btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+                            } else {
+                                btn.classList.add('bg-white', 'text-gray-600', 'border-gray-300', 'hover:bg-gray-50');
+                            }
+                        });
+                    } else {
+                        allButtons.forEach(btn => btn.disabled = false);
+                        alert('Gagal memperbarui status order. Silakan coba lagi.');
+                    }
+                })
+                .catch(err => {
+                    allButtons.forEach(btn => btn.disabled = false);
+                    alert('Terjadi kesalahan jaringan.');
+                });
+            }
+
+            // PO Status Form AJAX
+            if (form.classList.contains('status-update-form')) {
+                event.preventDefault();
+
+                const submitter = event.submitter || clickedButton;
+                if (!submitter) return;
+
+                const statusValue = submitter.value;
+                const buttons = form.querySelectorAll('button');
+
+                buttons.forEach(btn => btn.disabled = true);
+
+                const formData = new FormData(form);
+                formData.set('status', statusValue);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        buttons.forEach(btn => {
+                            btn.disabled = false;
+                            const isClicked = btn.value === statusValue;
+                            
+                            btn.className = 'px-2 py-1 text-xs font-semibold rounded-md transition border';
+                            
+                            if (isClicked) {
+                                if (statusValue === 'menunggu') {
+                                    btn.classList.add('bg-amber-100', 'text-amber-800', 'border-amber-300');
+                                } else if (statusValue === 'diproses') {
+                                    btn.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-300');
+                                } else if (statusValue === 'selesai') {
+                                    btn.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+                                }
+                            } else {
+                                btn.classList.add('bg-white', 'border-gray-200', 'text-gray-500', 'hover:bg-gray-50');
+                            }
+                        });
+                    } else {
+                        buttons.forEach(btn => btn.disabled = false);
+                        alert('Gagal memperbarui status PO. Silakan coba lagi.');
+                    }
+                })
+                .catch(err => {
+                    buttons.forEach(btn => btn.disabled = false);
+                    alert('Terjadi kesalahan jaringan.');
+                });
+            }
+        });
+    </script>
 </x-app-layout>
