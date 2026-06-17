@@ -54,12 +54,32 @@
                 </form>
             </div>
 
-            <!-- Uploads List Header -->
-            <div class="flex items-center justify-between mb-4 mt-8">
-                <h3 class="text-lg font-bold text-gray-800">{{ __('Riwayat Upload') }}</h3>
-                <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl border border-indigo-200 shadow-sm">
-                    Total: {{ $uploads->count() }} upload
-                </span>
+            <!-- Uploads List Header & Search -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 mt-8">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">{{ __('Riwayat Upload') }}</h3>
+                    <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-xl border border-indigo-200 shadow-sm inline-block mt-1">
+                        Total: {{ $uploads->count() }} upload
+                    </span>
+                </div>
+                
+                <!-- Search input -->
+                <form method="GET" action="{{ route('admin.ransum.index') }}" class="w-full md:w-80">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            placeholder="Cari kapal, voyage, rute..." 
+                            value="{{ $search ?? '' }}" 
+                            class="w-full text-sm text-gray-700 border border-gray-300 rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                        >
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </form>
             </div>
 
             @if($uploads->isEmpty())
@@ -83,15 +103,22 @@
                                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                     <div class="flex flex-wrap items-center gap-3">
                                         <!-- Status Badge -->
-                                        @if($upload->status === 'imported')
-                                            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                Imported
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                                                Pending
-                                            </span>
-                                        @endif
+                                        <div class="flex flex-col gap-1 shrink-0">
+                                            @if($upload->status === 'imported')
+                                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 w-fit">
+                                                    Imported
+                                                </span>
+                                                @if($upload->imported_at)
+                                                    <span class="text-[10px] text-gray-500 font-semibold whitespace-nowrap">
+                                                        {{ $upload->imported_at->timezone('Asia/Jakarta')->format('d M Y · H:i') }}
+                                                    </span>
+                                                @endif
+                                            @else
+                                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200 w-fit">
+                                                    Pending
+                                                </span>
+                                            @endif
+                                        </div>
                                         
                                         <!-- Excel File Icon and Name -->
                                         <div class="flex items-center gap-1.5 text-gray-600 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl">
@@ -161,14 +188,131 @@
                                             <span class="font-semibold text-gray-700">{{ $upload->items->count() }}</span> item
                                         </p>
                                     </div>
-                                    <div class="grid gap-3 sm:grid-cols-2 mt-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                        <div>
-                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{{ __('Diupload Oleh') }}</p>
-                                            <p class="text-xs font-semibold text-slate-700 mt-0.5">{{ $upload->uploader->name ?? '-' }}</p>
+                                    <div class="mt-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                                        <!-- Primary Upload Details -->
+                                        <div class="grid grid-cols-2 gap-3 pb-3 border-b border-slate-200/60">
+                                            <div>
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{{ __('Diupload Oleh') }}</p>
+                                                <p class="text-xs font-bold text-indigo-700 mt-0.5">{{ $upload->uploader->name ?? '-' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{{ __('Tanggal Upload') }}</p>
+                                                <p class="text-xs font-semibold text-slate-700 mt-0.5">{{ $upload->created_at->format('d M Y · H:i') }}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{{ __('Tanggal Upload') }}</p>
-                                            <p class="text-xs font-semibold text-slate-700 mt-0.5">{{ $upload->created_at->format('d M Y · H:i') }}</p>
+
+                                        <!-- Vessel & Voyage Metadata -->
+                                        <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                                            <div>
+                                                <p class="text-slate-400 font-medium">Vessel Code</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->vessel_code ?? '-' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-slate-400 font-medium">Contact Person</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->contact_person ?? '-' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-slate-400 font-medium">Year</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->year ?? '-' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-slate-400 font-medium">ETA</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->eta ?? '-' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-slate-400 font-medium">Vessel Route</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->vessel_route ?? '-' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-slate-400 font-medium">Port Tujuan</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->port_tujuan ?? '-' }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-slate-400 font-medium">Jumlah Crew</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->jumlah_crew ?? '-' }} orang</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-slate-400 font-medium">Durasi Pensupplaian</p>
+                                                <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->jumlah_hari_pensupplaian ?? '-' }} hari</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Route Detail -->
+                                        <div class="text-xs bg-white p-2.5 rounded-xl border border-slate-100">
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Rute Sekarang</p>
+                                            <p class="font-semibold text-slate-700 leading-tight">{{ $upload->rute_sekarang ?? '-' }}</p>
+                                        </div>
+
+                                        <!-- Financial Details -->
+                                        <div class="border-t border-slate-200/60 pt-3 space-y-3 text-xs">
+                                            <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                                                <div>
+                                                    <p class="text-slate-400 font-medium">Budget</p>
+                                                    <p class="font-bold text-gray-800 mt-0.5">Rp{{ number_format((float) ($upload->budget ?? 0), 0, ',', '.') }}</p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-slate-400 font-medium">Total Belanja Ransum</p>
+                                                    <p class="font-bold text-gray-800 mt-0.5">Rp{{ number_format((float) ($upload->total_belanja_ransum ?? 0), 0, ',', '.') }}</p>
+                                                </div>
+                                                <div class="col-span-2 bg-slate-100 p-2.5 rounded-xl border border-slate-200/40">
+                                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Selisih Anggaran & Pembelanjaan</p>
+                                                    <p class="text-sm font-bold mt-1 {{ ($upload->selisih_anggaran ?? 0) < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
+                                                        Rp{{ number_format((float) ($upload->selisih_anggaran ?? 0), 0, ',', '.') }}
+                                                    </p>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <p class="text-slate-400 font-medium">Anggaran per hari/per orang</p>
+                                                    <p class="font-semibold text-slate-700 mt-0.5">
+                                                        @if($upload->jumlah_crew > 0 && $upload->jumlah_hari_pensupplaian > 0)
+                                                            Rp{{ number_format((float) (($upload->budget ?? 0) / $upload->jumlah_crew / $upload->jumlah_hari_pensupplaian), 0, ',', '.') }}
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Collapsible Extra Details -->
+                                            <details class="group mt-1">
+                                                <summary class="flex items-center justify-between text-[11px] font-bold text-indigo-600 cursor-pointer select-none hover:text-indigo-700 py-1">
+                                                    <span>{{ __('Tampilkan Detail Keuangan & Form') }}</span>
+                                                    <svg class="w-3 h-3 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </summary>
+                                                <div class="grid grid-cols-2 gap-x-4 gap-y-3 mt-2 pt-2 border-t border-slate-100 text-[11px]">
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Date Start</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->date_start ?? '-' }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Date End</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->date_end ?? '-' }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Currency</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->currency ?? '-' }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Conversi</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->conversi_rupiah ?? '-' }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Barang Non BKP</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">Rp{{ number_format((float) ($upload->barang_non_bkp ?? 0), 0, ',', '.') }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Barang BKP</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">Rp{{ number_format((float) ($upload->barang_bkp ?? 0), 0, ',', '.') }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Pajak 11%</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">Rp{{ number_format((float) ($upload->pajak_11 ?? 0), 0, ',', '.') }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-slate-400 font-medium">Vendor</p>
+                                                        <p class="font-semibold text-slate-700 mt-0.5">{{ $upload->vendor_name ?? '-' }}</p>
+                                                    </div>
+                                                </div>
+                                            </details>
                                         </div>
                                     </div>
                                 </div>

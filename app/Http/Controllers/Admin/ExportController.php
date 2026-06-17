@@ -51,6 +51,8 @@ class ExportController extends Controller
 
         $file->move($this->uploadDir, $uniqueName);
 
+        \App\Models\ActivityLog::log('upload_export_file', 'Mengunggah file excel/csv: "' . $file->getClientOriginalName() . '"');
+
         return redirect()->route('admin.export.index')->with('success', 'File "' . basename($file->getClientOriginalName()) . '" uploaded successfully.');
     }
 
@@ -153,6 +155,8 @@ class ExportController extends Controller
             abort(404);
         }
 
+        \App\Models\ActivityLog::log('download_export_file', 'Mendownload file excel/csv: "' . $safeName . '"');
+
         return response()->download($filePath, $safeName);
     }
 
@@ -162,6 +166,7 @@ class ExportController extends Controller
         $filePath = $this->uploadDir . '/' . $safeName;
 
         if (file_exists($filePath) && preg_match('/\.(xls|xlsx|csv)$/i', $safeName)) {
+            \App\Models\ActivityLog::log('delete_export_file', 'Menghapus file excel/csv: "' . $safeName . '"');
             if (!unlink($filePath)) {
                 return redirect()->route('admin.export.index')->with('error', 'Failed to delete the file.');
             }

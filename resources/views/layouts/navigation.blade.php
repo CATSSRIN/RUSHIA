@@ -77,6 +77,15 @@
             <!-- Settings Dropdown -->
             @auth
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-3">
+                @if(auth()->user()->is_admin)
+                    <a href="{{ route('admin.history.index') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-500 hover:text-indigo-600 transition ease-in-out duration-150" title="Histori Aktivitas">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>{{ __('Histori') }}</span>
+                    </a>
+                @endif
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -128,6 +137,7 @@
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">{{ __('Users') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.admins.index')" :active="request()->routeIs('admin.admins.*')">{{ __('Admins') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.warehouses.index')" :active="request()->routeIs('admin.warehouses.*')">{{ __('Warehouses') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.history.index')" :active="request()->routeIs('admin.history.index')">{{ __('Histori Aktivitas') }}</x-responsive-nav-link>
             @elseif(auth()->user()->is_warehouse)
                 <x-responsive-nav-link :href="route('warehouse.index')" :active="request()->routeIs('warehouse.*')">{{ __('Gudang') }}</x-responsive-nav-link>
             @else

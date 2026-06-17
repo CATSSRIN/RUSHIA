@@ -32,11 +32,24 @@ class RansumController extends Controller
     // Index – list all uploads
     // ------------------------------------------------------------------
 
-    public function index()
+    public function index(Request $request)
     {
-        $uploads = RansumUpload::with('uploader', 'pos', 'items')
-            ->orderByDesc('created_at')
-            ->get();
+        $search = $request->input('search');
+
+        $query = RansumUpload::with('uploader', 'pos', 'items')
+            ->orderByDesc('created_at');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('original_filename', 'like', "%{$search}%")
+                  ->orWhere('vessel_name', 'like', "%{$search}%")
+                  ->orWhere('vessel_code', 'like', "%{$search}%")
+                  ->orWhere('voyage', 'like', "%{$search}%")
+                  ->orWhere('port_tujuan', 'like', "%{$search}%");
+            });
+        }
+
+        $uploads = $query->get();
 
         // Group Ransum items by vendor name in a single efficient query
         $codes = $uploads->flatMap(fn($u) => $u->items->pluck('kode_item'))
@@ -68,7 +81,7 @@ class RansumController extends Controller
             $upload->grouped_items_by_vendor = $grouped;
         }
 
-        return view('admin.ransum.index', compact('uploads'));
+        return view('admin.ransum.index', compact('uploads', 'search'));
     }
 
     // ------------------------------------------------------------------
@@ -136,6 +149,8 @@ class RansumController extends Controller
             'status'            => 'pending',
             'uploaded_by'       => auth()->id(),
         ] + $parser->parseSignatures()));
+
+        \App\Models\ActivityLog::log('upload_ransum', 'Mengunggah file BPB Ransum: "' . $file->getClientOriginalName() . '" untuk kapal ' . ($upload->vessel_name ?? '-'));
 
         return redirect()->route('admin.ransum.preview', $upload->id)
             ->with('success', __('File berhasil diupload. Silakan periksa preview sebelum import.'));
@@ -252,6 +267,8 @@ class RansumController extends Controller
             ]);
         });
 
+        \App\Models\ActivityLog::log('import_ransum', 'Mengimpor data Ransum #' . $upload->id . ' (' . ($upload->vessel_name ?? 'Kapal') . ') - ' . count($items) . ' item');
+
         return redirect()->route('admin.ransum.preview', $upload->id)
             ->with('success', __('Berhasil mengimport :count item ke database.', ['count' => count($items)]));
     }
@@ -327,6 +344,8 @@ class RansumController extends Controller
 
         $upload->update([$type . '_photo' => $safeBase . '/' . $filename]);
 
+        \App\Models\ActivityLog::log('upload_signature_photo', 'Mengunggah foto tanda tangan untuk "' . ($type === 'pemohon' ? $upload->pemohon : $upload->menyetujui) . '" (' . ucfirst($type) . ') pada Ransum #' . $upload->id);
+
         return redirect()->route('admin.ransum.preview', $upload->id)
             ->with('success', __('Foto :type berhasil diupload.', ['type' => ucfirst($type)]));
     }
@@ -346,7 +365,9 @@ class RansumController extends Controller
 
         $validated = $request->validate($this->itemValidationRules());
 
-        RansumItem::create(array_merge(['ransum_upload_id' => $id], $validated));
+        $item = RansumItem::create(array_merge(['ransum_upload_id' => $id], $validated));
+
+        \App\Models\ActivityLog::log('add_ransum_item', 'Menambahkan item "' . ($item->nama_ransum ?? '-') . '" ke Ransum #' . $id);
 
         return redirect()->route('admin.ransum.preview', $id)
             ->with('success', __('Item berhasil ditambahkan.'));
@@ -375,6 +396,8 @@ class RansumController extends Controller
             'imported_at' => now(),
         ]);
 
+        \App\Models\ActivityLog::log('finalize_ransum', 'Memfinalisasi data Ransum #' . $upload->id . ' (' . ($upload->vessel_name ?? 'Kapal') . ')');
+
         return redirect()->route('admin.ransum.preview', $upload->id)
             ->with('success', __('Data berhasil difinalisasi ke database.'));
     }
@@ -387,6 +410,8 @@ class RansumController extends Controller
         $validated = $request->validate($this->itemValidationRules());
         $item->update($validated);
 
+        \App\Models\ActivityLog::log('edit_ransum_item', 'Mengedit item "' . ($item->nama_ransum ?? '-') . '" pada Ransum #' . $id);
+
         return redirect()->route('admin.ransum.preview', $id)
             ->with('success', __('Item berhasil diperbarui.'));
     }
@@ -395,7 +420,10 @@ class RansumController extends Controller
     {
         $upload = RansumUpload::findOrFail($id);
         $item   = RansumItem::where('ransum_upload_id', $id)->findOrFail($itemId);
+        $itemName = $item->nama_ransum;
         $item->delete();
+
+        \App\Models\ActivityLog::log('delete_ransum_item', 'Menghapus item "' . ($itemName ?? '-') . '" dari Ransum #' . $id);
 
         return redirect()->route('admin.ransum.preview', $id)
             ->with('success', __('Item berhasil dihapus.'));
@@ -477,6 +505,8 @@ class RansumController extends Controller
             ->setPaper('a4', 'portrait');
 
         $filename = 'DO-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        \App\Models\ActivityLog::log('download_do', 'Mengunduh DO Ransum #' . $id . ' (' . ($upload->vessel_name ?? 'Kapal') . ') - No DO: ' . ($request->input('no_do') ?? '-'));
 
         return $pdf->download($filename);
     }
@@ -589,6 +619,8 @@ class RansumController extends Controller
 
         $filename = 'invoice-ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
 
+        \App\Models\ActivityLog::log('download_invoice', 'Mengunduh Invoice Ransum #' . $id . ' (' . ($upload->vessel_name ?? 'Kapal') . ') - No Invoice: ' . $invoiceNumber);
+
         return $pdf->download($filename);
     }
 
@@ -686,6 +718,8 @@ class RansumController extends Controller
 
         $filename = 'surat-ams-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
 
+        \App\Models\ActivityLog::log('download_ams', 'Mengunduh Surat AMS Ransum #' . $id . ' (' . ($upload->vessel_name ?? 'Kapal') . ') - Reff: ' . $amsReff);
+
         return $pdf->download($filename);
     }
 
@@ -707,6 +741,8 @@ class RansumController extends Controller
         if (is_dir($subDir)) {
             File::deleteDirectory($subDir);
         }
+
+        \App\Models\ActivityLog::log('delete_ransum', 'Menghapus data upload Ransum #' . $id . ' (' . ($upload->vessel_name ?? 'Kapal') . ')');
 
         $upload->delete();
 
@@ -792,6 +828,8 @@ class RansumController extends Controller
 
         $filename = 'Total-Ransum-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
 
+        \App\Models\ActivityLog::log('download_total_pdf', 'Mengunduh PDF Total Ransum #' . $id . ' (' . ($upload->vessel_name ?? 'Kapal') . ')');
+
         return $pdf->download($filename);
     }
 
@@ -858,6 +896,8 @@ class RansumController extends Controller
             ->setPaper('a4', 'landscape');
 
         $filename = 'List-' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $upload->vessel_name ?? $upload->id) . '.pdf';
+
+        \App\Models\ActivityLog::log('download_list_pdf', 'Mengunduh PDF List Ransum #' . $id . ' (' . ($upload->vessel_name ?? 'Kapal') . ')');
 
         return $pdf->download($filename);
     }
@@ -983,6 +1023,8 @@ public function downloadRansumPo(Request $request, int $id, string $supplierKey)
                 'pdf_path' => $filename,
             ]
         );
+
+        \App\Models\ActivityLog::log('download_po_ransum', 'Mengunduh Purchase Order ' . $supplierName . ' Ransum #' . $id . ' (' . ($upload->vessel_name ?? 'Kapal') . ') - PO: ' . ($formData['po_number'] ?? '-'));
 
         return $pdf->download($filename);
     }
@@ -1196,6 +1238,8 @@ public function downloadRansumPo(Request $request, int $id, string $supplierKey)
         $po->update([
             'status' => $request->input('status')
         ]);
+
+        \App\Models\ActivityLog::log('update_po_status_ransum', 'Memperbarui status PO Vendor ' . ($po->vendor_name ?? $po->supplier_key) . ' Ransum #' . $po->ransum_upload_id . ' menjadi ' . ucfirst($po->status));
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

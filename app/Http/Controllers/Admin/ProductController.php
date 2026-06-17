@@ -48,9 +48,11 @@ class ProductController extends Controller
             'is_active' => ['boolean'],
         ]);
 
-        Product::create($request->only('vendor_id', 'kode', 'name', 'category', 'description', 'harga_supplier', 'harga_jual', 'unit') + [
+        $product = Product::create($request->only('vendor_id', 'kode', 'name', 'category', 'description', 'harga_supplier', 'harga_jual', 'unit') + [
             'is_active' => $request->boolean('is_active', true),
         ]);
+
+        \App\Models\ActivityLog::log('create_product', 'Menambahkan produk baru: ' . $product->name . ' (Kode: ' . ($product->kode ?? '-') . ')');
 
         return redirect()->route('admin.products.index')->with('success', 'Product added successfully.');
     }
@@ -78,11 +80,15 @@ class ProductController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
+        \App\Models\ActivityLog::log('update_product', 'Memperbarui produk: ' . $product->name . ' (Kode: ' . ($product->kode ?? '-') . ')');
+
         return redirect()->route('admin.products.index')->with('success', 'Product updated.');
     }
 
     public function destroy(Product $product)
     {
+        \App\Models\ActivityLog::log('delete_product', 'Menghapus produk: ' . $product->name . ' (Kode: ' . ($product->kode ?? '-') . ')');
+
         $product->delete();
         return redirect()->route('admin.products.index')->with('success', 'Product removed.');
     }

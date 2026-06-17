@@ -67,6 +67,8 @@ class OrderController extends Controller
     {
         $order->update(['status' => $status]);
 
+        \App\Models\ActivityLog::log('update_order_status', 'Memperbarui status Order #' . $order->id . ' menjadi ' . ucfirst($status));
+
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'success' => true,
@@ -82,12 +84,17 @@ class OrderController extends Controller
     {
         $order->load('user', 'ship', 'items.product.vendor');
         $pdf = Pdf::loadView('admin.orders.invoice', compact('order'));
+
+        \App\Models\ActivityLog::log('download_order_invoice', 'Mengunduh Invoice Order #' . $order->id);
+
         return $pdf->download('invoice-order-' . $order->id . '.pdf');
     }
 
     public function downloadTotalSheet(Order $order)
     {
         $order->load('user', 'ship', 'items.product.vendor');
+
+        \App\Models\ActivityLog::log('download_order_totalsheet', 'Mengunduh Total Sheet Excel untuk Order #' . $order->id);
 
         return Excel::download(
             new OrderTotalSheetExport($order),
@@ -184,6 +191,8 @@ public function downloadPo(Request $request, Order $order, Vendor $vendor)
             ]
         );
 
+        \App\Models\ActivityLog::log('download_order_po', 'Mengunduh Purchase Order Vendor ' . $vendor->name . ' untuk Order #' . $order->id . ' - PO: ' . ($request->input('po_number') ?? '-'));
+
         return $pdf->download($filename);
     }
 
@@ -241,6 +250,8 @@ public function downloadPo(Request $request, Order $order, Vendor $vendor)
         $po->update([
             'status' => $request->input('status')
         ]);
+
+        \App\Models\ActivityLog::log('update_po_status_order', 'Memperbarui status PO Vendor ' . ($po->vendor->name ?? 'Vendor') . ' Order #' . $po->order_id . ' menjadi ' . ucfirst($po->status));
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

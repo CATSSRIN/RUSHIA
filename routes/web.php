@@ -57,6 +57,9 @@ Route::middleware(['auth', WarehouseMiddleware::class])->name('warehouse.')->gro
 
 // Admin routes
 Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
+    // Admin Activity History Log
+    Route::get('history', [\App\Http\Controllers\Admin\HistoryController::class, 'index'])->name('history.index');
+
     // Export / File Upload (general)
     Route::get('export', [ExportController::class, 'index'])->name('export.index');
     Route::post('export/upload', [ExportController::class, 'upload'])->name('export.upload');

@@ -21,7 +21,9 @@ class UserShipController extends Controller
             'flag'       => ['nullable', 'string', 'max:100'],
         ]);
 
-        $user->ships()->create($request->only('name', 'imo_number', 'flag'));
+        $ship = $user->ships()->create($request->only('name', 'imo_number', 'flag'));
+
+        \App\Models\ActivityLog::log('create_ship', 'Menambahkan kapal baru ' . $ship->name . ' (IMO: ' . ($ship->imo_number ?? '-') . ') untuk User ' . $user->name);
 
         return redirect()->route('admin.users.index')->with('success', 'Ship added successfully.');
     }
