@@ -134,8 +134,3 @@ Untuk memastikan keandalan alur integrasi parser Excel dan kalkulasi dokumen keu
 ```bash
 php artisan test
 ```
-
----
-
-## 📄 Lisensi
-Perangkat lunak ini dikembangkan sebagai bagian dari proyek operasional internal **PT Andalan Maritim Sejahtera** dan dilindungi di bawah Hak Kekayaan Intelektual (HKI) Program Komputer.
