@@ -130,7 +130,7 @@
                                     </div>
 
                                     <!-- Action Buttons -->
-                                    <div class="flex flex-wrap gap-2 items-center">
+                                    <div class="flex flex-wrap gap-2 items-start">
                                         @if($upload->status === 'imported')
                                             <a href="{{ route('admin.ransum.preview', $upload->id) }}" class="inline-flex items-center justify-center rounded-lg border border-slate-100 bg-slate-50 px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 transition shadow-sm gap-1">
                                                 <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,12 +139,20 @@
                                                 </svg>
                                                 {{ __('Preview') }}
                                             </a>
-                                            <a href="{{ route('admin.ransum.do.preview', $upload->id) }}" class="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition shadow-sm gap-1">
-                                                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                                </svg>
-                                                {{ __('Buat DO') }}
-                                            </a>
+                                            <div class="flex flex-col gap-2">
+                                                <a href="{{ route('admin.ransum.do.preview', $upload->id) }}" class="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition shadow-sm gap-1">
+                                                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                    </svg>
+                                                    {{ __('Buat DO') }}
+                                                </a>
+                                                <a href="{{ route('admin.ransum.ams.preview', $upload->id) }}" class="inline-flex items-center justify-center rounded-lg border border-purple-200 bg-purple-50 px-3.5 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 transition shadow-sm gap-1">
+                                                    <svg class="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                    </svg>
+                                                    {{ __('Buat Surat AMS') }}
+                                                </a>
+                                            </div>
                                             <a href="{{ route('admin.ransum.invoice', $upload->id) }}" class="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition shadow-sm gap-1">
                                                 <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
