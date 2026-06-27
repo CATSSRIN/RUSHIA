@@ -11,27 +11,33 @@ Berikut adalah diagram use case yang memetakan hubungan antara aktor dan fungsio
 ```mermaid
 flowchart TB
     %% Definisi Aktor
-    Admin["👤 Admin Internal\n(Staf Operasional)"]
-    SuperAdmin["👑 Super Admin\n(Administrator Sistem)"]
-    Manajemen["📊 Pihak Manajemen\n(Direksi)"]
+    Admin["Admin Internal\n(Staf Operasional)"]
+    SuperAdmin["Super Admin\n(Administrator Sistem)"]
+    Manajemen["Pihak Manajemen\n(Direksi)"]
 
     subgraph Sistem RUSHIA ["Aplikasi RUSHIA"]
-        %% Use Case Bersama
-        UC_Auth["Autentikasi & Akses\n(Login & Logout)"]
+        direction LR
 
-        %% Use Case Admin Internal
-        UC_Import["Konversi & Ekstraksi Data\n(Import Excel Ransum)"]
-        UC_DocGen["Pembuatan Dokumen Otomatis\n(DO, PO, & Invoice)"]
-        UC_History["Manajemen Riwayat Dokumen\n(Pencarian & Cetak Ulang)"]
+        subgraph Col1 ["Staf Operasional"]
+            direction TB
+            UC_Import["Konversi & Ekstraksi Data\n(Import Excel Ransum)"]
+            UC_DocGen["Pembuatan Dokumen Otomatis\n(DO, PO, & Invoice)"]
+            UC_History["Manajemen Riwayat Dokumen\n(Pencarian & Cetak Ulang)"]
+        end
 
-        %% Use Case Super Admin
-        UC_UserManage["Manajemen Data Pengguna\n(Akun Karyawan PT AMS)"]
-        UC_RoleManage["Pengelolaan Hak Akses\n(Role & Permission)"]
-        UC_Monitoring["Monitoring Sistem & Database\n(Cek Log & Sinkronisasi)"]
+        subgraph Col2 ["Sistem & Keamanan"]
+            direction TB
+            UC_Auth["Autentikasi & Akses\n(Login & Logout)"]
+            UC_UserManage["Manajemen Data Pengguna\n(Akun Karyawan PT AMS)"]
+            UC_RoleManage["Pengelolaan Hak Akses\n(Role & Permission)"]
+            UC_Monitoring["Monitoring Sistem & Database\n(Cek Log & Sinkronisasi)"]
+        end
 
-        %% Use Case Manajemen
-        UC_Report["Akses Laporan Operasional\n(Rekapitulasi Dokumen)"]
-        UC_Performance["Monitoring Kinerja Administratif\n(Analisis Efisiensi Alur)"]
+        subgraph Col3 ["Direksi / Manajemen"]
+            direction TB
+            UC_Report["Akses Laporan Operasional\n(Rekapitulasi Dokumen)"]
+            UC_Performance["Monitoring Kinerja Administratif\n(Analisis Efisiensi Alur)"]
+        end
     end
 
     %% Hubungan Aktor ke Use Case
